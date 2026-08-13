@@ -23,16 +23,23 @@ With no plan found it auto-generates one from the title, description, and commit
 
 ### Format it actually parses
 
-Its detection rules are strict. A plan must be:
+From `skills/gather-test-context/SKILL.md`, a plan must meet **all three**:
 
-- Under a heading it recognises: **Test Plan**, QA Steps, Testing Steps, Acceptance Criteria, or Verification Steps
-- **One contiguous numbered list** — the skill derives "a flat numbered list of test cases"
-- Containing at least two action verbs from: Navigate, Go to, Click, Tap, Fill, Enter, Type, Verify, Assert, Check, Confirm, Ensure, Submit, Expect, Open, Close, Scroll, Select, Upload
-- At least three test cases
+1. A numbered or bulleted list
+2. At least two action verbs from: Navigate, Go to, Click, Tap, Fill, Enter, Type, Verify, Assert, Check, Confirm, Ensure, Submit, Expect, Open, Close, Scroll, Select, Upload
+3. Under a recognised heading — `Test Plan`, `QA Steps`, `Testing Steps`, `Acceptance Criteria`, `Verification Steps` — **or** an explicit numbered list of at least 3 test cases
 
-> **The plan must be flat.** [`docs/test-plan.md`](./test-plan.md) and [`docs/test-plan-smoke.md`](./test-plan-smoke.md) are written for humans and for the [test generator](./test-generation-instructions.md): separate `## TC-NNN` sections, each with its own list restarting at 1. That structure does **not** match the "one contiguous numbered list" rule.
->
-> Paste [`docs/test-plan-flat.md`](./test-plan-flat.md) instead — the same eight cases flattened into 46 sequential steps, each tagged `[TC-NNN]` so results stay traceable.
+Criterion 3 is an *or*, so a plan under a `Test Plan` heading qualifies whether or not its numbering is contiguous. All three plan files in this repo satisfy the rules.
+
+**Which to paste:**
+
+| File | Cases | Notes |
+|---|---|---|
+| [`test-plan-flat.md`](./test-plan-flat.md) | 8 | One sequential list, each step tagged `[TC-NNN]`. Smallest paste, least ambiguity. |
+| [`test-plan-smoke.md`](./test-plan-smoke.md) | 8 | Same cases with per-case `## TC-NNN` headings — easier to read in the PR thread. |
+| [`test-plan.md`](./test-plan.md) | 52 | Full coverage. Likely exceeds `max-budget-usd: 5` in a single run. |
+
+Prefer the flat file: the plugin flattens whatever it finds into one step sequence anyway, so supplying it pre-flattened removes a conversion step where step boundaries could be misread.
 
 ### Order matters
 
@@ -90,6 +97,16 @@ When the plugin auto-generates, it also **posts the generated plan as a comment*
 ```
 
 `preview` points at the deployed Vercel URL and is the default; `local` exists for running the plugin against a dev server on the same machine (`--env local`).
+
+**Storage-state files are gitignored on purpose.** The plugin's own configuration guide requires it — they hold live session cookies. Their absence from a fresh clone is expected, not a bug: `authSetupCommand` regenerates them on demand.
+
+The auth-gate ladder in `run-playwright-session` behaves as follows:
+
+1. **No `storageStates` configured** — if the plan contains no login steps, every case is `BLOCKED` with `Auth gate detected — no credentials provided`
+2. **Configured but the gate still appears** — `authSetupCommand` runs once from the repo root, the context is recreated, and the navigation retried
+3. **Still gated** — every case is `BLOCKED` with `Auth session rejected — storage state stale and setup command did not recover it`
+
+Declaring `storageStates` therefore only helps: a plan whose cases sign in through the UI works either way, and the ladder adds recovery when a session expires.
 
 Without this file the plugin scrapes a URL out of PR comments and runs **unauthenticated**, which for this app means it never gets past the sign-in screen.
 

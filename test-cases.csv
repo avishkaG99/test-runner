@@ -1,3 +1,5 @@
+#TEST_PLAN
+
 ID,Feature,Title,Type,Steps,Expected Result,Notes,Status,Added In
 TC-001,Authentication — sign in,sign in as a standard user,Happy,"1. Navigate to `/sign-in?reset=true` — the sign-in form is visible
 2. Enter `user@test.com` in the Email field

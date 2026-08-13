@@ -1,3 +1,4 @@
+# TEST_PLAN
 # Test Plan — Test Target App
 
 Paste this as a **PR comment** to give web-app-tester an explicit plan. Without one it generates its own from the PR diff, which is fine for small changes but tends to miss the deliberate error paths this app is built around.
