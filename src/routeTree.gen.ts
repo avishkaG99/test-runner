@@ -22,6 +22,7 @@ import { Route as AuthenticatedFormsWizardRouteImport } from './routes/_authenti
 import { Route as AuthenticatedNotificationsIndexRouteImport } from './routes/_authenticated/notifications/index'
 import { Route as AuthenticatedProductsIndexRouteImport } from './routes/_authenticated/products/index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
+import { Route as AuthenticatedSavedViewsIndexRouteImport } from './routes/_authenticated/saved-views/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedUiPlaygroundIndexRouteImport } from './routes/_authenticated/ui-playground/index'
 
@@ -93,6 +94,12 @@ const AuthenticatedReportsIndexRoute =
     path: '/reports/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSavedViewsIndexRoute =
+  AuthenticatedSavedViewsIndexRouteImport.update({
+    id: '/saved-views/',
+    path: '/saved-views/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/products/': typeof AuthenticatedProductsIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
+  '/saved-views/': typeof AuthenticatedSavedViewsIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/ui-playground/': typeof AuthenticatedUiPlaygroundIndexRoute
 }
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsIndexRoute
   '/products': typeof AuthenticatedProductsIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
+  '/saved-views': typeof AuthenticatedSavedViewsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/ui-playground': typeof AuthenticatedUiPlaygroundIndexRoute
 }
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/_authenticated/products/': typeof AuthenticatedProductsIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
+  '/_authenticated/saved-views/': typeof AuthenticatedSavedViewsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/ui-playground/': typeof AuthenticatedUiPlaygroundIndexRoute
 }
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/notifications/'
     | '/products/'
     | '/reports/'
+    | '/saved-views/'
     | '/settings/'
     | '/ui-playground/'
   fileRoutesByTo: FileRoutesByTo
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/products'
     | '/reports'
+    | '/saved-views'
     | '/settings'
     | '/ui-playground'
   id:
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications/'
     | '/_authenticated/products/'
     | '/_authenticated/reports/'
+    | '/_authenticated/saved-views/'
     | '/_authenticated/settings/'
     | '/_authenticated/ui-playground/'
   fileRoutesById: FileRoutesById
@@ -303,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saved-views/': {
+      id: '/_authenticated/saved-views/'
+      path: '/saved-views'
+      fullPath: '/saved-views/'
+      preLoaderRoute: typeof AuthenticatedSavedViewsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/': {
       id: '/_authenticated/settings/'
       path: '/settings'
@@ -344,6 +364,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsIndexRoute: typeof AuthenticatedNotificationsIndexRoute
   AuthenticatedProductsIndexRoute: typeof AuthenticatedProductsIndexRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
+  AuthenticatedSavedViewsIndexRoute: typeof AuthenticatedSavedViewsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedUiPlaygroundIndexRoute: typeof AuthenticatedUiPlaygroundIndexRoute
 }
@@ -356,6 +377,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsIndexRoute: AuthenticatedNotificationsIndexRoute,
   AuthenticatedProductsIndexRoute: AuthenticatedProductsIndexRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
+  AuthenticatedSavedViewsIndexRoute: AuthenticatedSavedViewsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedUiPlaygroundIndexRoute: AuthenticatedUiPlaygroundIndexRoute,
 }

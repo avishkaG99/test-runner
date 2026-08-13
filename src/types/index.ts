@@ -87,3 +87,11 @@ export interface AppNotification {
   read: boolean
   createdAt: string
 }
+
+export interface SavedView {
+  id: string
+  name: string
+  category: ProductCategory | 'all'
+  status: ProductStatus | 'all'
+  createdAt: string
+}
