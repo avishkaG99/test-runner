@@ -1,0 +1,595 @@
+{
+  "app": "Playwright Test Target App",
+  "baseUrl": "http://localhost:5173",
+  "phase": "all screens implemented",
+  "resetMechanism": {
+    "urlParam": "?reset=true",
+    "description": "Appending ?reset=true to any URL restores seed data and clears the session before the app boots. Use it at the start of every independent test.",
+    "apiEndpoint": "POST /api/app/reset"
+  },
+  "accounts": [
+    {
+      "key": "admin",
+      "email": "admin@test.com",
+      "password": "Admin123!",
+      "name": "Ada Admin",
+      "role": "admin",
+      "behavior": "Signs in successfully; sees the Admin nav item and dashboard admin panel."
+    },
+    {
+      "key": "user",
+      "email": "user@test.com",
+      "password": "User123!",
+      "name": "Sam Standard",
+      "role": "user",
+      "behavior": "Signs in successfully; Admin nav item and admin panel are hidden; /admin redirects to /dashboard."
+    },
+    {
+      "key": "locked",
+      "email": "locked@test.com",
+      "password": "Locked123!",
+      "name": "Lee Locked",
+      "role": "user",
+      "behavior": "Always rejected with HTTP 403 and the message 'This account is locked. Contact your administrator.'"
+    }
+  ],
+  "magicTriggers": [
+    {
+      "trigger": "Email containing 'fail' on sign-up, forgot-password, or the forms endpoint",
+      "effect": "Mock API returns HTTP 500 with message 'Unexpected server error. Please try again later.'"
+    },
+    {
+      "trigger": "Product name containing 'fail' on create/update",
+      "effect": "Mock API returns HTTP 500."
+    },
+    {
+      "trigger": "Duplicate SKU on product create",
+      "effect": "HTTP 409 with fieldErrors.sku = 'SKU must be unique.'"
+    },
+    {
+      "trigger": "Flaky mode enabled (localStorage key tta.flakyMode)",
+      "effect": "~30% of authenticated GET requests fail with HTTP 503 'Service temporarily unavailable. Please retry.'"
+    }
+  ],
+  "seedData": {
+    "products": {
+      "count": 20,
+      "active": 15,
+      "draft": 3,
+      "archived": 2,
+      "lowStock": 6,
+      "note": "lowStock counts products with stock > 0 and stock < 10."
+    },
+    "dashboardStats": {
+      "totalProducts": 20,
+      "activeProducts": 15,
+      "lowStock": 6
+    }
+  },
+  "testidConvention": "<page>-<element>-<role>, e.g. sign-in-email-input, dashboard-stat-totalProducts-value. Field validation errors use <fieldId>-error.",
+  "routes": [
+    {
+      "path": "/",
+      "auth": "public",
+      "behavior": "Redirects to /dashboard when authenticated, otherwise /sign-in.",
+      "testids": []
+    },
+    {
+      "path": "/sign-in",
+      "auth": "public",
+      "feature": "src/features/auth/sign-in.tsx",
+      "searchParams": [
+        {
+          "name": "redirect",
+          "description": "URL to return to after a successful sign-in."
+        }
+      ],
+      "testids": [
+        "sign-in-form",
+        "sign-in-email-input",
+        "sign-in-password-input",
+        "sign-in-remember-checkbox",
+        "sign-in-submit-button",
+        "sign-in-error",
+        "sign-in-email-error",
+        "sign-in-password-error",
+        "sign-in-forgot-link",
+        "sign-in-signup-link"
+      ],
+      "behaviors": [
+        "Empty submit shows inline errors on both fields and sets aria-invalid=true.",
+        "Invalid email format is rejected client-side on blur and submit.",
+        "Password shorter than 8 characters is rejected client-side.",
+        "Wrong credentials render sign-in-error with 'Invalid email or password'.",
+        "Locked account renders sign-in-error mentioning 'locked'.",
+        "Success stores a session and navigates to ?redirect or /dashboard.",
+        "Visiting while already authenticated redirects to /dashboard."
+      ]
+    },
+    {
+      "path": "/sign-up",
+      "auth": "public",
+      "feature": "src/features/auth/sign-up.tsx",
+      "testids": [
+        "sign-up-form",
+        "sign-up-name-input",
+        "sign-up-email-input",
+        "sign-up-password-input",
+        "sign-up-confirm-input",
+        "sign-up-submit-button",
+        "sign-up-error",
+        "sign-up-success",
+        "sign-up-strength",
+        "sign-up-strength-label",
+        "sign-up-sign-in-link",
+        "sign-up-to-sign-in-link"
+      ],
+      "behaviors": [
+        "Password strength meter scores length, uppercase, digit, and symbol (labels: Very weak, Weak, Fair, Good, Strong).",
+        "Mismatched confirm password shows 'Passwords do not match.'",
+        "Existing email returns HTTP 409 with a field error.",
+        "Email containing 'fail' returns HTTP 500 and renders sign-up-error.",
+        "Success replaces the form with sign-up-success."
+      ]
+    },
+    {
+      "path": "/forgot-password",
+      "auth": "public",
+      "feature": "src/features/auth/forgot-password.tsx",
+      "testids": [
+        "forgot-password-form",
+        "forgot-password-email-input",
+        "forgot-password-submit-button",
+        "forgot-password-error",
+        "forgot-password-success",
+        "forgot-password-back-link",
+        "forgot-password-sign-in-link"
+      ],
+      "behaviors": [
+        "Empty or malformed email is rejected client-side.",
+        "Email containing 'fail' returns HTTP 500.",
+        "Success replaces the form with forgot-password-success."
+      ]
+    },
+    {
+      "path": "/dashboard",
+      "auth": "protected",
+      "feature": "src/features/dashboard/index.tsx",
+      "testids": [
+        "dashboard-page",
+        "dashboard-stats",
+        "dashboard-stats-loading",
+        "dashboard-stat-totalProducts",
+        "dashboard-stat-totalProducts-value",
+        "dashboard-stat-activeProducts",
+        "dashboard-stat-activeProducts-value",
+        "dashboard-stat-lowStock",
+        "dashboard-stat-lowStock-value",
+        "dashboard-stat-totalValue",
+        "dashboard-stat-totalValue-value",
+        "dashboard-refresh-button",
+        "dashboard-error",
+        "dashboard-user-email",
+        "dashboard-user-role",
+        "dashboard-admin-panel"
+      ],
+      "behaviors": [
+        "dashboard-stats-loading (skeletons) is visible before dashboard-stats appears.",
+        "dashboard-admin-panel renders only for the admin role.",
+        "dashboard-refresh-button refetches stats."
+      ]
+    },
+    {
+      "path": "/products",
+      "auth": "protected",
+      "testids": [
+        "products-page",
+        "products-create-button",
+        "products-search-input",
+        "products-category-filter",
+        "products-bulk-delete-button",
+        "products-loading",
+        "products-empty",
+        "products-error",
+        "products-table",
+        "products-select-all-checkbox",
+        "products-sort-name",
+        "products-sort-sku",
+        "products-sort-category",
+        "products-sort-price",
+        "products-sort-stock",
+        "products-sort-status",
+        "products-pagination",
+        "products-shown-count",
+        "products-total-count",
+        "products-prev-page",
+        "products-next-page",
+        "products-page-indicator",
+        "products-row-<id>",
+        "products-name-<id>",
+        "products-select-<id>",
+        "products-edit-<id>",
+        "products-delete-<id>",
+        "products-create-dialog",
+        "products-create-name-input",
+        "products-create-sku-input",
+        "products-create-price-input",
+        "products-create-stock-input",
+        "products-create-category-select",
+        "products-create-status-select",
+        "products-create-submit",
+        "products-create-cancel",
+        "products-create-error",
+        "products-edit-dialog",
+        "products-edit-name-input",
+        "products-edit-submit",
+        "products-edit-cancel",
+        "products-edit-error",
+        "products-delete-dialog",
+        "products-delete-confirm",
+        "products-delete-cancel",
+        "products-bulk-delete-dialog",
+        "products-bulk-delete-confirm",
+        "products-bulk-delete-cancel"
+      ],
+      "feature": "src/features/products/index.tsx",
+      "behaviors": [
+        "Search filters on name or SKU and is debounced ~300ms; it resets to page 1.",
+        "Category filter and column sorting both reset to page 1; sorted headers expose aria-sort.",
+        "Page size is 10, so the 20 seeded products give 2 pages.",
+        "Create validates: name >= 3 chars, SKU matching ABCD-1234, price > 0, stock >= 0 integer.",
+        "A duplicate SKU returns HTTP 409 and shows a field error on the SKU input.",
+        "A product name containing 'fail' returns HTTP 500 and renders products-create-error.",
+        "Delete and bulk delete both require confirming a dialog; Cancel makes no change.",
+        "Mutations invalidate the list and dashboard queries, so the table updates without a reload.",
+        "Filters matching nothing render products-empty."
+      ]
+    },
+    {
+      "path": "/forms",
+      "auth": "protected",
+      "testids": [
+        "forms-page",
+        "showcase-form",
+        "forms-error",
+        "forms-success",
+        "forms-submitted-json",
+        "forms-fullname-input",
+        "forms-email-input",
+        "forms-quantity-input",
+        "forms-bio-textarea",
+        "forms-plan-select",
+        "forms-country-input",
+        "forms-country-listbox",
+        "forms-country-option-<code>",
+        "forms-country-empty",
+        "forms-interests-group",
+        "forms-interest-automation",
+        "forms-interest-accessibility",
+        "forms-interest-performance",
+        "forms-interest-security",
+        "forms-interests-error",
+        "forms-contact-group",
+        "forms-contact-email",
+        "forms-contact-phone",
+        "forms-contact-sms",
+        "forms-notifications-switch",
+        "forms-start-date-input",
+        "forms-end-date-input",
+        "forms-satisfaction-slider",
+        "forms-files-input",
+        "forms-file-list",
+        "forms-slow-mode-checkbox",
+        "forms-submit-button",
+        "forms-reset-button",
+        "forms-wizard-link"
+      ],
+      "feature": "src/features/forms/index.tsx",
+      "behaviors": [
+        "Covers text, number, textarea, native select, custom ARIA combobox, checkbox group, radio group, switch, dates, range slider, and multi-file upload.",
+        "The combobox supports typing to filter plus ArrowUp/ArrowDown/Enter/Escape keyboard control.",
+        "Cross-field rule: end date must be on or after start date.",
+        "Validation errors appear on blur and on submit; each field error uses <fieldId>-error.",
+        "Slow submit mode adds a 2.5s delay with the button disabled and a spinner.",
+        "An email containing 'fail' returns HTTP 500 and renders forms-error.",
+        "Successful submit shows a toast and echoes the payload in forms-submitted-json."
+      ]
+    },
+    {
+      "path": "/forms/wizard",
+      "auth": "protected",
+      "feature": "src/features/forms/wizard.tsx",
+      "testids": [
+        "wizard-page",
+        "wizard-steps",
+        "wizard-step-number",
+        "wizard-step-indicator-0",
+        "wizard-step-indicator-1",
+        "wizard-step-indicator-2",
+        "wizard-step-indicator-3",
+        "wizard-step-0",
+        "wizard-step-1",
+        "wizard-step-2",
+        "wizard-first-name-input",
+        "wizard-last-name-input",
+        "wizard-email-input",
+        "wizard-company-input",
+        "wizard-team-size-select",
+        "wizard-street-input",
+        "wizard-city-input",
+        "wizard-postcode-input",
+        "wizard-review",
+        "wizard-review-<field>",
+        "wizard-back-button",
+        "wizard-next-button",
+        "wizard-submit-button",
+        "wizard-error",
+        "wizard-complete",
+        "wizard-restart-button",
+        "wizard-back-to-forms-link"
+      ],
+      "behaviors": [
+        "Four steps: details, company, address, review. Next is blocked until the current step validates.",
+        "Back is disabled on step 1 and clears validation errors.",
+        "Postcode must match 3-10 characters of letters, digits, spaces, or hyphens.",
+        "The review step lists every collected value before submission.",
+        "Submitting renders wizard-complete; Start over resets to step 1."
+      ]
+    },
+    {
+      "path": "/ui-playground",
+      "auth": "protected",
+      "testids": [
+        "ui-playground-page",
+        "tabs-demo",
+        "tab-overview",
+        "tab-activity",
+        "tab-settings",
+        "tabpanel-overview",
+        "tabpanel-activity",
+        "tabpanel-settings",
+        "accordion-demo",
+        "accordion-trigger-what",
+        "accordion-trigger-how",
+        "accordion-trigger-why",
+        "accordion-panel-what",
+        "accordion-panel-how",
+        "accordion-panel-why",
+        "tooltip-demo",
+        "tooltip-trigger",
+        "tooltip-content",
+        "toast-success-button",
+        "toast-error-button",
+        "toast-info-button",
+        "dialog-demo",
+        "dialog-open-button",
+        "dialog-result",
+        "demo-dialog",
+        "demo-dialog-confirm",
+        "demo-dialog-cancel",
+        "demo-dialog-close-button",
+        "demo-dialog-backdrop",
+        "dnd-demo",
+        "dnd-list",
+        "dnd-item-t-1",
+        "dnd-item-t-2",
+        "dnd-item-t-3",
+        "dnd-item-t-4",
+        "dnd-order",
+        "iframe-demo",
+        "demo-iframe",
+        "popup-link",
+        "infinite-scroll-demo",
+        "infinite-list",
+        "infinite-count",
+        "infinite-item-<n>",
+        "infinite-sentinel",
+        "infinite-loading",
+        "infinite-load-more"
+      ],
+      "feature": "src/features/ui-playground/index.tsx",
+      "behaviors": [
+        "Tabs follow the ARIA tab pattern and respond to ArrowLeft/ArrowRight.",
+        "Dialogs trap Tab focus, close on Escape or backdrop click, and restore focus on close.",
+        "Drag and drop reorders the list; dnd-order exposes the current order as a comma-separated string.",
+        "The iframe is loaded from a blob URL; inside it are iframe-heading, iframe-button, and iframe-output.",
+        "popup-link opens /popup.html in a new tab, catchable via page.waitForEvent('popup').",
+        "The list starts at 20 rows and grows by 20 up to 100 via scrolling or Load more."
+      ]
+    },
+    {
+      "path": "/reports",
+      "auth": "protected",
+      "testids": [
+        "reports-page",
+        "reports-status",
+        "reports-progressbar",
+        "reports-progress-value",
+        "reports-generate-button",
+        "reports-cancel-button",
+        "reports-reset-button",
+        "reports-success",
+        "reports-cancelled"
+      ],
+      "feature": "src/features/reports/index.tsx",
+      "behaviors": [
+        "Generating runs ~4s, updating an ARIA progressbar from 0 to 100.",
+        "reports-status reads idle, running, done, or cancelled.",
+        "Cancel stops the run and renders reports-cancelled; Reset returns it to idle."
+      ]
+    },
+    {
+      "path": "/settings",
+      "auth": "protected",
+      "testids": [
+        "settings-page",
+        "settings-theme-group",
+        "settings-theme-light",
+        "settings-theme-dark",
+        "settings-latency-input",
+        "settings-flaky-checkbox",
+        "settings-reset-button",
+        "settings-trigger-error-button"
+      ],
+      "feature": "src/features/settings/index.tsx",
+      "behaviors": [
+        "Theme radios persist to localStorage (tta.theme) and toggle the dark class on <html>.",
+        "Latency and flaky mode persist to localStorage and change mock API behavior on the next request.",
+        "Reset app data restores the seed catalogue and invalidates every query.",
+        "Trigger render error throws during render, surfacing the error-boundary testid."
+      ]
+    },
+    {
+      "path": "/admin",
+      "auth": "admin-only",
+      "testids": [
+        "admin-page",
+        "admin-current-user",
+        "admin-users-table",
+        "admin-user-row-<id>",
+        "admin-user-status-<id>"
+      ],
+      "behaviors": [
+        "Standard users are redirected to /dashboard by the route's beforeLoad guard.",
+        "Lists the three seeded accounts with their role and locked status."
+      ],
+      "feature": "src/features/admin/index.tsx"
+    },
+    {
+      "path": "/<unknown>",
+      "auth": "public",
+      "behavior": "Renders the 404 page.",
+      "testids": [
+        "not-found-page",
+        "not-found-home-link"
+      ]
+    }
+  ],
+  "appShell": {
+    "description": "Present on every protected route via the _authenticated layout.",
+    "testids": [
+      "app-header",
+      "app-sidebar",
+      "app-main",
+      "app-nav-toggle",
+      "app-current-user",
+      "app-sign-out-button",
+      "app-theme-toggle",
+      "app-force-expire-button",
+      "nav-link-dashboard",
+      "nav-link-products",
+      "nav-link-forms",
+      "nav-link-ui-playground",
+      "nav-link-reports",
+      "nav-link-settings",
+      "nav-link-admin"
+    ],
+    "behaviors": [
+      "app-sign-out-button clears the session and navigates to /sign-in.",
+      "app-force-expire-button backdates the session expiry, simulating an expired token, and navigates to /sign-in.",
+      "app-theme-toggle switches light/dark and persists to localStorage key tta.theme.",
+      "app-nav-toggle shows the sidebar on viewports narrower than 768px."
+    ]
+  },
+  "api": {
+    "baseUrl": "/api",
+    "note": "Served entirely in the browser by MSW handlers running on fetch/XHR interceptors (no service worker). Authenticated endpoints require an Authorization: Bearer header; missing it returns HTTP 401.",
+    "defaultLatencyMs": 400,
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/auth/login",
+        "auth": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/signup",
+        "auth": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/forgot-password",
+        "auth": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/dashboard/stats",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/products",
+        "auth": true,
+        "query": [
+          "search",
+          "category",
+          "sortBy",
+          "sortDir",
+          "page",
+          "pageSize"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/products/:id",
+        "auth": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/products",
+        "auth": true
+      },
+      {
+        "method": "PUT",
+        "path": "/api/products/:id",
+        "auth": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/products/:id",
+        "auth": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/products/bulk-delete",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/categories",
+        "auth": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/forms/submit",
+        "auth": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/app/reset",
+        "auth": false
+      }
+    ]
+  },
+  "storageKeys": {
+    "tta.token": "Auth token string.",
+    "tta.user": "{ user, expiresAt } session payload.",
+    "tta.theme": "'light' | 'dark'.",
+    "tta.products": "The mock product database.",
+    "tta.flakyMode": "boolean - enables random 503s on reads.",
+    "tta.latency": "number - simulated API latency in ms."
+  },
+  "mockingStrategy": {
+    "layer": "in-page fetch/XHR interceptors (@mswjs/interceptors)",
+    "whyNotServiceWorker": "MSW's service worker calls location.reload() when a registration exists but navigator.serviceWorker.controller is null. Firefox reports a null controller on every fresh document load, so full-page navigations became an infinite reload loop.",
+    "implication": "Requests are mocked from the first tick of each page load; no worker registration or ?reset warmup needed."
+  },
+  "errorBoundary": {
+    "testids": [
+      "error-boundary",
+      "error-boundary-message",
+      "error-boundary-reload"
+    ],
+    "behavior": "Catches render errors; the Settings page can trigger one deliberately."
+  }
+}

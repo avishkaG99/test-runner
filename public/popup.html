@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Popup Window</title>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 24px;
+        color: #0f172a;
+      }
+      button {
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 data-testid="popup-heading">Popup window</h1>
+    <p data-testid="popup-message">
+      This page opened in a new tab. Playwright can capture it via the
+      <code>page.waitForEvent('popup')</code> handler.
+    </p>
+    <button type="button" data-testid="popup-close-button" onclick="window.close()">
+      Close this window
+    </button>
+  </body>
+</html>
