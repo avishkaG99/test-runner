@@ -1,103 +1,138 @@
-# UI playground
+# Frontend Feature Specification — UI playground
 
-Seven interaction patterns on one page, each isolated in its own card. These are the things that break naive tests: focus traps, frames, popups, drag-and-drop, lazily-loaded lists.
+**Purpose:** Collect the interaction patterns that most often break automated tests — focus traps, frames, popups, drag-and-drop, lazy lists — into one screen where each can be exercised in isolation.
 
-**Route:** `/ui-playground`
-**Source:** [`src/features/ui-playground/index.tsx`](../../src/features/ui-playground/index.tsx)
-**Related:** [Products — dialogs](./products.md#dialogs) · [Testing guide](../testing-guide.md)
+**Owner / driver:** Test-target maintainers
+
+**Status:** Approved
+
+**Related:** [Test plan TC-014b, TC-014c](../test-plan.md) · [Products — dialogs](./products.md) · [Testing guide](../testing-guide.md) · [`src/features/ui-playground/index.tsx`](../../src/features/ui-playground/index.tsx)
+
+**Version / last updated:** 1.0, 2026-08-13
 
 ---
 
-## Tabs
+## 1. Requirement
 
-Three tabs following the ARIA tab pattern: `role="tablist"`, `role="tab"` with `aria-selected`, `role="tabpanel"` linked by `aria-controls` / `aria-labelledby`.
+### 1.1 Summary
+- Seven independent components, each in its own card, chosen because naive tests fail on them.
+- Nothing here is business functionality; the value is entirely in the interaction surface.
 
-Only the active tab is in the tab order (`tabIndex=0`, others `-1`), and `ArrowLeft` / `ArrowRight` cycle between them — the keyboard behavior real tab widgets have and naive ones lack.
+### 1.2 Scope
+- **In scope**
+  - Tabs with arrow-key navigation, accordion, tooltip on hover *and* focus
+  - Dialog with focus trap, Escape, and backdrop dismissal
+  - Drag-and-drop reordering with the order mirrored to a readable element
+  - An embedded iframe with interactive content
+  - A link opening a new tab
+  - Infinite scroll via `IntersectionObserver` plus a Load more fallback
+  - Success, error, and info toasts
+- **Out of scope**
+  - Persisting any of this state — everything resets on reload
+  - Multi-container drag-and-drop (a kanban board)
+  - Virtualised lists
+- **Assumptions**
+  - The iframe must not be routed through the mock layer; see §3.2
 
-Inactive panels use the `hidden` attribute, so `toBeHidden()` works.
+---
 
-**Testids:** `tab-overview`, `tab-activity`, `tab-settings`, `tabpanel-overview`, `tabpanel-activity`, `tabpanel-settings`
+## 2. Backend API references (integration only)
 
-## Accordion
+None. Every component is client-only, which is deliberate: it isolates interaction behavior from network behavior.
 
-Three collapsible items, one open at a time. Triggers expose `aria-expanded` and `aria-controls`; collapsed panels are removed from the DOM rather than hidden, so a test can assert on presence.
+---
 
-Clicking the open item closes it, leaving none open — a state some accordion implementations forbid.
+## 3. Current frontend behavior
 
-**Testids:** `accordion-trigger-what|how|why`, `accordion-panel-what|how|why`
+### 3.1 Implemented now
+- `src/features/ui-playground/index.tsx` — all seven components
+- `src/components/ui/dialog.tsx` — the shared dialog primitive, also used by [Products](./products.md)
+- `public/popup.html` — the new-tab target
 
-## Tooltip
+### 3.2 Gaps / TODO in current code
+- The iframe loads from a **blob URL**, not an HTTP path. Serving it over HTTP routed it through the MSW interceptor layer; tearing the frame down during navigation then produced `InvalidStateError` storms in Firefox that left the *next* page blank. The blob URL keeps it off the network entirely.
+- The blob URL is intentionally not revoked on unmount — Firefox tears frames down asynchronously, and revoking immediately races that teardown.
+- Drag-and-drop uses the native HTML API, which `dragTo()` handles in Chromium but may need manual mouse steps elsewhere.
 
-Appears on **both** hover and keyboard focus, and disappears on blur — the accessibility requirement most tooltips get wrong. It carries `role="tooltip"` and is linked by `aria-describedby` only while visible.
+---
 
-**Testids:** `tooltip-trigger`, `tooltip-content`
+## 4. Screen flow and interactions
 
-## Toasts
+### 4.1 Load flow
+- **Step 1:** Guard resolves; screen mounts from `@/features/ui-playground`
+- **Step 2:** No queries; all state is local
+- **Step 3:** Tabs default to Overview, accordion to the first item, list to 20 rows
+- **Loading state:** Only within infinite scroll (`infinite-loading`, ~400ms per batch)
+- **Empty state:** Not applicable
 
-Three buttons firing success, error, and info toasts (via Sonner). Toasts auto-dismiss and can be dismissed manually, so tests must either assert quickly or assert on a more durable signal.
+### 4.2 Submit flow
+No mutations. Interactions are local state changes:
 
-**Testids:** `toast-success-button`, `toast-error-button`, `toast-info-button`
+- **Dialog:** Confirm/Cancel writes the outcome to `dialog-result` so a test can prove which button ran
+- **Drag-and-drop:** Reorders the array; `dnd-order` exposes the result as a comma-separated string
+- **Infinite scroll:** Grows 20 → 100 in steps of 20; the Load more button disappears at 100
+- **Failure UX:** None — no operation here can fail
 
-## Dialog
+---
 
-The same primitive used by every [products](./products.md#dialogs) dialog. Behaviors worth testing:
+## 5. Frontend data model mapping
 
-- Focus moves into the dialog on open, to the first focusable element
-- `Tab` and `Shift+Tab` are trapped inside — tabbing past the last element wraps to the first
-- `Escape` closes it
-- Clicking the backdrop (but not the panel) closes it
-- Focus returns to the trigger on close
+No API mapping. Local state only:
 
-`dialog-result` records whether the last interaction was `confirmed` or `cancelled`, so a test can prove which button ran rather than just that the dialog closed.
+| UI element | State | Type | Notes |
+|---|---|---|---|
+| Active tab | `active` | string | Tab id |
+| Open accordion item | `open` | string \| null | `null` when all collapsed |
+| Tooltip visibility | `showTip` | boolean | Hover and focus |
+| Dialog open / result | `open`, `confirmed` | boolean, string \| null | Result mirrored to the DOM |
+| Task order | `tasks` | array | Mirrored to `dnd-order` |
+| Row count | `count` | number | 20 → 100 |
 
-**Testids:** `dialog-open-button`, `demo-dialog`, `demo-dialog-confirm`, `demo-dialog-cancel`, `demo-dialog-close-button`, `demo-dialog-backdrop`, `dialog-result`
+---
 
-## Drag and drop
+## 6. Testing and quality
 
-Four reorderable items using the native HTML drag-and-drop API. The current order is mirrored to `dnd-order` as a comma-separated string of ids, which is far easier to assert than reading DOM positions:
+- **Unit tests:** Focus-trap wrap-around in `dialog.tsx`; the reorder helper
+- **Integration tests:** [`e2e/smoke.spec.ts`](../../e2e/smoke.spec.ts) — tabs, accordion, Escape-to-close, iframe interaction, and popup capture
+- **Manual/agent plan:** [TC-014b, TC-014c](../test-plan.md)
+- **Not required in this feature:** Visual regression or animation timing
 
-```ts
-await expect(page.getByTestId('dnd-order')).toHaveText('t-2,t-1,t-3,t-4')
-```
+---
 
-Each item also carries `data-position` with its index.
+## 7. Specs to apply
 
-Native drag-and-drop is genuinely awkward to automate — `dragTo()` works in Chromium but can need manual mouse steps elsewhere. That difficulty is the point.
+- `React-Specs/ui-ux/error-handling-user-feedback-spec.md`
+- `React-Specs/quality-ops/testing-strategy-spec.md`
 
-**Testids:** `dnd-list`, `dnd-item-t-1..t-4`, `dnd-order`
+---
 
-## Iframe
+## 8. Delivery checklist
 
-An embedded widget containing a heading, a button, and an output paragraph. Clicking the button inside writes text to the output — so a test must cross the frame boundary in both directions:
+- [x] Feature spec linked to work item/PR
+- [x] UI behavior implemented according to this spec
+- [x] Keyboard and ARIA behavior verified
+- [x] Integration tests cover this scope
+- [x] `npm run lint`, typecheck, and build pass
+- [x] No secrets committed
 
-```ts
-const frame = page.frameLocator('[data-testid="demo-iframe"]')
-await frame.getByTestId('iframe-button').click()
-await expect(frame.getByTestId('iframe-output')).toHaveText('clicked inside iframe')
-```
+---
 
-> The frame loads from a **blob URL**, not an HTTP path. Serving it over HTTP routed it through the mock layer, and tearing the frame down during navigation produced `InvalidStateError` storms in Firefox that blanked the next page. See [Architecture — the mock backend](../architecture.md#the-mock-backend).
+## Appendix — Test surface
 
-**Testids:** `demo-iframe`; inside the frame: `iframe-heading`, `iframe-button`, `iframe-output`
+**Tabs:** `tab-overview|activity|settings`, `tabpanel-…`. ARIA tab pattern; ArrowLeft/ArrowRight cycle; inactive panels use `hidden`.
 
-## Popup
+**Accordion:** `accordion-trigger-what|how|why`, `accordion-panel-…`. Collapsed panels are removed from the DOM.
 
-`popup-link` opens `/popup.html` in a new tab, caught with `waitForEvent('popup')`:
+**Tooltip:** `tooltip-trigger`, `tooltip-content`. `role="tooltip"`, appears on hover **and** focus.
 
-```ts
-const [popup] = await Promise.all([
-  page.waitForEvent('popup'),
-  page.getByTestId('popup-link').click(),
-])
-await expect(popup.getByTestId('popup-heading')).toBeVisible()
-```
+**Toasts:** `toast-success-button`, `toast-error-button`, `toast-info-button`. Auto-dismiss.
 
-The popup has its own close button (`popup-close-button`).
+**Dialog:** `dialog-open-button`, `demo-dialog`, `demo-dialog-confirm|cancel|close-button`, `demo-dialog-backdrop`, `dialog-result`.
 
-## Infinite scroll
+**Drag-and-drop:** `dnd-list`, `dnd-item-t-1..t-4`, `dnd-order`. Each item carries `data-position`.
 
-A scrollable list starting at 20 rows, growing by 20 up to 100. New rows load two ways: scrolling the sentinel into view (via `IntersectionObserver`) or clicking `infinite-load-more`. Each load takes ~400ms and shows `infinite-loading`.
+**Iframe:** `demo-iframe`; inside: `iframe-heading`, `iframe-button`, `iframe-output`. Use `frameLocator()`.
 
-`infinite-count` holds the current row count, so growth is assertable without counting elements. The Load more button disappears at 100.
+**Popup:** `popup-link` → `/popup.html` with `popup-heading`, `popup-message`, `popup-close-button`. Capture with `waitForEvent('popup')`.
 
-**Testids:** `infinite-list`, `infinite-count`, `infinite-item-<n>`, `infinite-sentinel`, `infinite-loading`, `infinite-load-more`
+**Infinite scroll:** `infinite-list`, `infinite-count`, `infinite-item-<n>`, `infinite-sentinel`, `infinite-loading`, `infinite-load-more`.

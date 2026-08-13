@@ -85,7 +85,7 @@ Field errors render on the input; a bare `message` renders in a banner. Both are
 
 ## Latency and flaky mode
 
-Default latency is **400ms** on every response, adjustable in [Settings](./features/settings.md#network-simulation) or by writing `tta.latency` to `localStorage`.
+Default latency is **400ms** on every response, adjustable in [Settings](./features/settings.md) or by writing `tta.latency` to `localStorage`.
 
 The delay is deliberate: instant responses would make loading states unobservable and teach nothing about waiting. Raise it to make skeletons trivially assertable; drop it to 0 to speed up suites that do not care.
 

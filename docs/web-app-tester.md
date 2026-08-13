@@ -24,6 +24,15 @@ Statuses mean specific things: `BLOCKED` covers a step that failed after retries
   "defaultEnvironment": "preview",
   "environments": {
     "preview": {
+      "baseUrl": "https://test-runner-git-test-pr-avishkag-2033s-projects.vercel.app",
+      "mutationsAllowed": true,
+      "storageStates": {
+        "admin": "tests/e2e/.auth/admin.json",
+        "user": "tests/e2e/.auth/user.json"
+      },
+      "defaultRole": "user"
+    },
+    "local": {
       "baseUrl": "http://localhost:5173",
       "mutationsAllowed": true,
       "storageStates": {
@@ -71,7 +80,7 @@ This writes `tests/e2e/.auth/user.json` and `admin.json` by signing in through t
 
 **These files are session credentials and are gitignored.** Never commit them.
 
-Roles map to the seeded accounts in [Authentication](./features/authentication.md#accounts): `user` for standard access, `admin` to reach [`/admin`](./features/admin.md).
+Roles map to the seeded accounts in [Authentication](./features/authentication.md#appendix--test-surface): `user` for standard access, `admin` to reach [`/admin`](./features/admin.md).
 
 ## Mutations and reset
 

@@ -1,70 +1,134 @@
-# Forms showcase
+# Frontend Feature Specification — Forms showcase
 
-Every common input type on one page, wired to real validation. The point is coverage: if the agent can drive this screen, it can drive most forms it will meet elsewhere.
+**Purpose:** Present every common input type on one screen with real validation, so any form pattern the agent will meet elsewhere is exercised here first.
 
-**Route:** `/forms`
-**Source:** [`src/features/forms/index.tsx`](../../src/features/forms/index.tsx)
-**Related:** [Wizard](./wizard.md) · [Mock API — failure triggers](../mock-api.md#failure-triggers) · [Products — create form](./products.md#create)
+**Owner / driver:** Test-target maintainers
+
+**Status:** Approved
+
+**Related:** [Test plan TC-011, TC-012, TC-012b](../test-plan.md) · [Wizard](./wizard.md) · [Mock API — failure triggers](../mock-api.md#failure-triggers) · [`src/features/forms/index.tsx`](../../src/features/forms/index.tsx)
+
+**Version / last updated:** 1.0, 2026-08-13
 
 ---
 
-## Inputs covered
+## 1. Requirement
 
-| Group | Controls | Testids |
-|---|---|---|
-| Text | text, email, number (min 1 / max 99), textarea | `forms-fullname-input`, `forms-email-input`, `forms-quantity-input`, `forms-bio-textarea` |
-| Selection | native select, custom combobox, checkbox group, radio group, switch | `forms-plan-select`, `forms-country-input`, `forms-interest-*`, `forms-contact-*`, `forms-notifications-switch` |
-| Dates, range, files | two date inputs, range slider, multi-file upload | `forms-start-date-input`, `forms-end-date-input`, `forms-satisfaction-slider`, `forms-files-input` |
+### 1.1 Summary
+- Coverage, not realism: text, number, textarea, native select, custom combobox, checkbox group, radio group, switch, dates, range slider, and multi-file upload.
+- Includes a cross-field rule and a forced server error, both of which single-field validation cannot catch.
 
-## The custom combobox
+### 1.2 Scope
+- **In scope**
+  - Every input type listed above, each individually addressable
+  - Validation on blur and on submit, including a cross-field date rule
+  - A slow-submit toggle producing a disabled button and spinner
+  - Payload echoed back on success so the round trip is assertable
+  - Reset returning the form to its initial state
+- **Out of scope**
+  - Real file storage — only filenames are submitted
+  - Rich-text editing, drag-to-upload, image preview
+  - Server-side validation beyond the `fail` trigger
+- **Assumptions**
+  - The combobox must be driven by keyboard as well as pointer
 
-The country field is not a `<select>` — it is a custom widget built on the ARIA combobox pattern, because that is what real design systems ship and what naive tests fall over on.
+---
 
-It supports:
+## 2. Backend API references (integration only)
 
-- Typing to filter options
-- `ArrowDown` / `ArrowUp` to move the active option
-- `Enter` to commit, `Escape` to close
-- Clicking an option
-- Clicking outside to dismiss
+| Purpose | Method | Endpoint | Request | Response | Notes |
+|---|---|---|---|---|---|
+| Submit | `POST` | `/api/forms/submit` | Arbitrary payload | `{ ok, received }` | 500 if `email` contains `fail`; echoes payload back |
 
-The input carries `role="combobox"`, `aria-expanded`, and `aria-controls`; the list is `role="listbox"` with `role="option"` children. So `getByRole('combobox')` works, and so does `getByTestId('forms-country-option-lk')`.
+---
 
-An empty result renders `forms-country-empty` rather than an empty list.
+## 3. Current frontend behavior
 
-## Validation
+### 3.1 Implemented now
+- `src/features/forms/index.tsx` — all inputs, validation, submit, reset
+- `src/components/ui/combobox.tsx` — ARIA combobox with filter and keyboard control
+- `src/lib/api/services/forms.ts` — submit service
 
-Runs on blur and again on submit. Required: full name, email, quantity, plan, country, at least one interest, both dates.
+### 3.2 Gaps / TODO in current code
+- File contents are never read; only `File.name` is submitted
+- Upload progress is a state, not a real byte-level progress bar
+- Slow-submit is a client-side delay, not server latency
 
-The interesting rule is **cross-field**: the end date must be on or after the start date. A single-field validator cannot express this, so it is a good test of whether the agent understands the form as a whole rather than field by field.
+---
 
-```ts
-await page.getByTestId('forms-start-date-input').fill('2026-05-01')
-await page.getByTestId('forms-end-date-input').fill('2026-04-01')
-await page.getByTestId('forms-end-date-input').blur()
-await expect(page.getByTestId('forms-end-date-error')).toBeVisible()
-```
+## 4. Screen flow and interactions
 
-Failing submit also fires an error toast, so there are two independent signals.
+### 4.1 Load flow
+- **Step 1:** Guard resolves; screen mounts from `@/features/forms`
+- **Step 2:** No queries — the form initialises from a local constant
+- **Step 3:** Country options come from a static list, not an API
+- **Loading state:** None on load
+- **Empty state:** Not applicable
 
-## Submission
+### 4.2 Submit flow
+- **Action:** `submitShowcaseForm(payload)` → `POST /api/forms/submit`
+- **Client validation:** Required fields, email format, quantity 1–99, at least one interest, and end date ≥ start date
+- **Success UX:** Success toast, `forms-success` block, and the echoed payload rendered as JSON
+- **Failure UX:** Validation failure fires an error toast and blocks submission; a server 500 renders `forms-error`
+- **Retry/idempotency:** Re-submitting is allowed; nothing is stored server-side
 
-On success the payload is echoed back and rendered as JSON in `forms-submitted-json`, alongside a success toast and the `forms-success` container. Asserting on the echoed JSON proves the round trip carried the right values — stronger than just checking a toast appeared.
+---
 
-Uploaded files appear in the payload as filenames, and in the UI as `forms-file-list` with one `forms-file-<name>` entry each.
+## 5. Frontend data model mapping
 
-### Slow submit
+| UI field | Form path | API field | Type | Required | Rules |
+|---|---|---|---|---|---|
+| Full name | `fullName` | `fullName` | string | Y | Non-empty |
+| Email | `email` | `email` | string | Y | Valid format; `fail` forces 500 |
+| Quantity | `quantity` | `quantity` | number | Y | Integer 1–99; cast on submit |
+| Bio | `bio` | `bio` | string | N | Free text |
+| Plan | `plan` | `plan` | enum | Y | `free` \| `pro` \| `enterprise` |
+| Country | `country` | `country` | string \| null | Y | Combobox; ISO-like code |
+| Interests | `interests` | `interests` | string[] | Y | At least one |
+| Contact method | `contactMethod` | `contactMethod` | enum | N | Defaults to `email` |
+| Notifications | `notifications` | `notifications` | boolean | N | Switch, defaults on |
+| Start / End date | `startDate`, `endDate` | same | ISO date | Y | End ≥ start |
+| Satisfaction | `satisfaction` | `satisfaction` | number | N | 0–10 slider |
+| Attachments | `files` | `files` | string[] | N | Mapped to filenames |
 
-`forms-slow-mode-checkbox` adds a 2.5-second delay before the request. During it the submit button is disabled with a spinner and `aria-busy`. Use this to test that the agent waits for completion rather than asserting immediately.
+- **State ownership:** Local `useState`; nothing cached
+- **Transformations:** Quantity string → number; `File[]` → `name[]`
+- **Error mapping:** Field errors render as `<fieldId>-error`; server message → `forms-error`
 
-### Forced server error
+---
 
-An email containing `fail` returns HTTP 500 and renders `forms-error`. See [failure triggers](../mock-api.md#failure-triggers) for the full list.
+## 6. Testing and quality
 
-## Reset
+- **Unit tests:** `validate()` including the cross-field date rule; combobox filtering
+- **Integration tests:** [`e2e/smoke.spec.ts`](../../e2e/smoke.spec.ts) — full submit with echo assertion, and the date rule
+- **Manual/agent plan:** [TC-011, TC-012, TC-012b](../test-plan.md)
+- **Not required in this feature:** Real upload throughput
 
-`forms-reset-button` clears every field, all errors, and any previous submission back to initial state — without a page reload. Useful for running several scenarios in one test.
+---
 
-## Testids
+## 7. Specs to apply
 
-Full list in [test-map.json](../../test-map.json) under `/forms`. Field errors follow `<fieldId>-error`, e.g. `forms-email-error`.
+- `React-Specs/ui-ux/forms-validation-spec.md`
+- `React-Specs/ui-ux/error-handling-user-feedback-spec.md`
+- `React-Specs/data/data-fetching-api-client-spec.md`
+- `React-Specs/quality-ops/testing-strategy-spec.md`
+
+---
+
+## 8. Delivery checklist
+
+- [x] Feature spec linked to work item/PR
+- [x] UI behavior implemented according to this spec
+- [x] Form validation and messages implemented
+- [x] API integration and error handling verified
+- [x] Integration tests cover this scope
+- [x] `npm run lint`, typecheck, and build pass
+- [x] No secrets committed
+
+---
+
+## Appendix — Test surface
+
+**Testids:** `forms-page`, `showcase-form`, `forms-error`, `forms-success`, `forms-submitted-json`, `forms-fullname-input`, `forms-email-input`, `forms-quantity-input`, `forms-bio-textarea`, `forms-plan-select`, `forms-country-input`, `forms-country-listbox`, `forms-country-option-<code>`, `forms-country-empty`, `forms-interests-group`, `forms-interest-<name>`, `forms-interests-error`, `forms-contact-group`, `forms-contact-<method>`, `forms-notifications-switch`, `forms-start-date-input`, `forms-end-date-input`, `forms-satisfaction-slider`, `forms-files-input`, `forms-file-list`, `forms-slow-mode-checkbox`, `forms-submit-button`, `forms-reset-button`, `forms-wizard-link`
+
+**Combobox:** `role="combobox"` with `aria-expanded`; options are `role="option"`. Supports typing, ArrowUp/ArrowDown, Enter, Escape, click, and click-outside.

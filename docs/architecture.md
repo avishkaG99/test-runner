@@ -83,7 +83,7 @@ Intercepting fetch and XHR directly removes the service worker entirely:
 - Requests are mocked from the first tick, with no window where they 404
 - No `mockServiceWorker.js` to keep in `public/`
 
-The tradeoff: requests made outside the page's JS context are not intercepted. Nothing in this app does that, and the [iframe](./features/ui-playground.md#iframe) deliberately loads from a blob URL to stay off the network entirely.
+The tradeoff: requests made outside the page's JS context are not intercepted. Nothing in this app does that, and the [iframe](./features/ui-playground.md#appendix--test-surface) deliberately loads from a blob URL to stay off the network entirely.
 
 Handlers live in [`src/mocks/handlers.ts`](../src/mocks/handlers.ts) and are unchanged from standard MSW — only the transport differs. See [Mock API](./mock-api.md).
 
