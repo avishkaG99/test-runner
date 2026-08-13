@@ -1,0 +1,234 @@
+ID,Feature,Title,Type,Steps,Expected Result,Notes,Status,Added In
+TC-001,Authentication — sign in,sign in as a standard user,Happy,"1. Navigate to `/sign-in?reset=true` — the sign-in form is visible
+2. Enter `user@test.com` in the Email field
+3. Enter `User123!` in the Password field
+4. Click **Sign in** — the browser lands on `/dashboard`
+5. Confirm the dashboard shows the signed-in email `user@test.com`",The user reaches the dashboard as `user@test.com`.,,Active,initial
+TC-002,Authentication — sign in,sign in as an administrator,Happy,"1. Navigate to `/sign-in?reset=true`
+2. Enter `admin@test.com` and `Admin123!`
+3. Click **Sign in** — the browser lands on `/dashboard`
+4. Confirm the displayed email is `admin@test.com` and the role reads `admin`
+5. Confirm an **Admin panel** section is visible on the dashboard
+6. Confirm the sidebar includes an **Admin** link",The admin signs in and sees both admin-only surfaces.,,Active,initial
+TC-003,Authentication — sign in,wrong password is rejected,Negative,"1. Navigate to `/sign-in?reset=true`
+2. Enter `user@test.com` and `WrongPass123!`
+3. Click **Sign in** — an error banner reads ""Invalid email or password""
+4. Confirm the browser is still on `/sign-in`",Access refused with a visible message and no navigation.,,Active,initial
+TC-004,Authentication — sign in,locked account gets its own message,Negative,"1. Navigate to `/sign-in?reset=true`
+2. Enter `locked@test.com` and `Locked123!`
+3. Click **Sign in** — an error banner mentions the account being locked
+4. Confirm the wording differs from the wrong-password message in TC-003","A distinct ""locked"" message; the user does not sign in.",,Active,initial
+TC-005,Authentication — sign in,empty submit shows per-field errors,Negative,"1. Navigate to `/sign-in?reset=true`
+2. Click **Sign in** without entering anything
+3. Confirm an error appears **below the Email field**
+4. Confirm an error appears **below the Password field**
+5. Confirm the browser has not navigated",Two field-level messages; no submission.,,Active,initial
+TC-006,Authentication — sign in,malformed email is rejected,Negative,"1. Navigate to `/sign-in?reset=true`
+2. Enter `notanemail` as the Email and `User123!` as the Password
+3. Click **Sign in**
+4. Confirm an error under the Email field asks for a valid address
+5. Confirm no request was submitted — the page does not navigate",Client-side format validation blocks submission.,,Active,initial
+TC-007,Authentication — sign in,password under 8 characters is rejected,Negative,"1. Navigate to `/sign-in?reset=true`
+2. Enter `user@test.com` and the password `short`
+3. Click **Sign in**
+4. Confirm an error under the Password field states the minimum length",Length validation blocks submission.,,Active,initial
+TC-008,Authentication — session,sign out ends the session,Happy,"1. Sign in as `user@test.com` / `User123!`
+2. Click **Sign out** in the header — the browser returns to sign-in
+3. Navigate directly to `/dashboard`
+4. Confirm the browser is redirected back to sign-in",The session is cleared and protected routes are unreachable.,,Active,initial
+TC-009,Authentication — session,the intended destination is restored after signing in,Happy,"1. Navigate to `/sign-in?reset=true` and wait for the form
+2. Navigate directly to `/products`
+3. Confirm the browser is redirected to the sign-in page
+4. Sign in as `user@test.com` / `User123!`
+5. Confirm the browser arrives at `/products`, **not** the dashboard","Access is blocked, then the original destination is restored.",,Active,initial
+TC-010,Authentication — session,an expired session is refused,Negative,"1. Sign in as `user@test.com` / `User123!`
+2. Click the **Force session expiry** control in the header
+3. Confirm the browser returns to the sign-in page
+4. Navigate directly to `/dashboard`
+5. Confirm the browser is redirected to sign-in rather than showing the dashboard",The expired session is treated as signed out.,,Active,initial
+TC-011,Authentication — sign up and password reset,create an account,Happy,"1. Navigate to `/sign-up?reset=true`
+2. Enter name `Brand New`, email `brandnew@test.com`
+3. Enter password `Password1!` and the same value in Confirm password
+4. Click **Create account**
+5. Confirm a success confirmation replaces the form",The account is created and the form is replaced by a confirmation.,,Active,initial
+TC-012,Authentication — sign up and password reset,password strength reflects complexity,Happy,"1. Navigate to `/sign-up?reset=true`
+2. Type `abc` into the Password field — the strength label reads a weak value
+3. Replace it with `Str0ng!Pass` — the strength label reads **Strong**","The strength indicator responds to length, case, digits, and symbols.",,Active,initial
+TC-013,Authentication — sign up and password reset,mismatched confirmation is rejected,Negative,"1. Navigate to `/sign-up?reset=true`
+2. Enter name `X` and email `new@test.com`
+3. Enter password `Password1!` and confirm password `Different1!`
+4. Click **Create account**
+5. Confirm an error under Confirm password states the passwords do not match",Submission is blocked at the confirmation field.,,Active,initial
+TC-014,Authentication — sign up and password reset,an already-registered email is refused,Negative,"1. Navigate to `/sign-up?reset=true`
+2. Enter name `Dup User` and email `user@test.com` (an existing account)
+3. Enter password `Str0ng!Pass` in both password fields
+4. Click **Create account**
+5. Confirm an error states the email is already registered",The duplicate is refused with a clear message.,,Active,initial
+TC-015,Authentication — sign up and password reset,request a password reset,Happy,"1. Navigate to `/forgot-password?reset=true`
+2. Enter `user@test.com`
+3. Click **Send reset link**
+4. Confirm a confirmation message replaces the form",The request is accepted and confirmed.,,Active,initial
+TC-016,Authentication — sign up and password reset,reset request hits a server error,Negative,"1. Navigate to `/forgot-password?reset=true`
+2. Enter `fail@test.com`
+3. Click **Send reset link**
+4. Confirm an error message appears and **no** success confirmation is shown",The server error surfaces visibly.,An email containing `fail` deliberately returns HTTP 500.,Active,initial
+TC-017,Dashboard,seeded totals render after loading,Happy,"1. Sign in as `user@test.com` / `User123!`
+2. Observe placeholder/skeleton cards while data loads
+3. Wait for the statistics to render
+4. Confirm **Total products** reads `20`
+5. Confirm **Active products** reads `15`
+6. Confirm **Low stock** reads `6`",Four stat cards showing the seeded figures.,,Active,initial
+TC-018,Dashboard,refresh refetches the statistics,Happy,"1. Sign in and remain on the dashboard
+2. Click **Refresh**
+3. Confirm the statistics remain visible and the values are unchanged",Refetching succeeds without disrupting the page.,,Active,initial
+TC-019,Dashboard,statistics reflect catalogue changes,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Delete any one product — the total count reads `19`
+3. Navigate to `/dashboard`
+4. Confirm **Total products** now reads `19`",The dashboard reflects the deletion without a manual reload.,,Active,initial
+TC-020,Dashboard,admin panel is hidden from standard users,Negative,"1. Sign in as `user@test.com` / `User123!`
+2. Confirm **no** Admin panel section appears on the dashboard
+3. Confirm the sidebar has **no** Admin link",Admin-only surfaces are absent for a standard user.,,Active,initial
+TC-021,Products — browsing,search narrows the table,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Confirm the table is visible and the total count reads `20`
+3. Type `Aurora` into the Search box
+4. Wait for the list to update — the total count reads `1`",Search filters by name.,Search is debounced ~300ms; wait for the count to change rather than asserting immediately.,Active,initial
+TC-022,Products — browsing,category filter narrows the table,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Select **books** in the Category filter
+3. Confirm the total count reads `4`
+4. Reset the filter to **All categories** — the count returns to `20`",Filtering and clearing both work.,,Active,initial
+TC-023,Products — browsing,sorting reorders and reverses,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Click the **Price** column header — rows reorder by price, cheapest first
+3. Click **Price** again — the order reverses, most expensive first",One click sorts ascending; a second reverses it.,,Active,initial
+TC-024,Products — browsing,pagination moves between pages,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Confirm the page indicator reads `Page 1 of 2`
+3. Click **Next** — the indicator reads `Page 2 of 2` and different products are listed
+4. Click **Previous** — the indicator returns to `Page 1 of 2`",Both directions work; 20 products at 10 per page give exactly 2 pages.,,Active,initial
+TC-025,Products — browsing,a filter matching nothing shows an empty state,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Type `zzzznotarealproduct` into the Search box
+3. Confirm a message states that no products match
+4. Clear the Search box — the full table of 20 returns","A clear empty-state message, and recovery when cleared.",,Active,initial
+TC-026,"Products — create, edit, delete",create a product,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Click **New product** — a dialog opens
+3. Enter name `Zephyr Test Widget`, SKU `TEST-9001`, price `19.99`, stock `7`
+4. Click **Create product** — the dialog closes and a success message appears
+5. Search for `Zephyr` — exactly one row is listed with that name",The product exists and is findable without reloading.,,Active,initial
+TC-027,"Products — create, edit, delete",edit a product,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Click **Edit** on the first row — a dialog opens with existing values pre-filled
+3. Change the Name to `Renamed Product`
+4. Click **Save changes** — the dialog closes with a success message
+5. Type `Renamed` into the Search box
+6. Confirm exactly one row is listed, named `Renamed Product`",Values pre-fill and the change persists.,"The table is sorted by name, so a renamed product usually moves — often to another page. Search for the new name rather than expecting it to stay in place.",Active,initial
+TC-028,"Products — create, edit, delete",delete a product,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Note the name of the first row, click its **Delete** button
+3. Confirm in the dialog — the row disappears and the count drops to `19`",The product is removed and the count updates.,,Active,initial
+TC-029,"Products — create, edit, delete",bulk delete several products,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Tick the checkboxes on the first three rows
+3. Confirm a bulk delete button appears showing **3 selected**
+4. Click it and confirm in the dialog
+5. Confirm the total count now reads `17`",Exactly the three selected products are removed.,,Active,initial
+TC-030,"Products — create, edit, delete",select-all covers the current page,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Tick the select-all checkbox in the table header
+3. Confirm the bulk delete button reports **10 selected** (the page size)","Select-all selects the visible page, not the entire catalogue.",,Active,initial
+TC-031,"Products — create, edit, delete",Cancel on the delete dialog does not delete,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Note the first row's name, click its **Delete** button
+3. Click **Cancel** — the dialog closes and the row is **still present**
+4. Confirm the total count is still `20`",Cancel preserves the row.,,Active,initial
+TC-032,"Products — create, edit, delete",empty required fields are rejected,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Click **New product**, then **Create product** with all fields empty
+3. Confirm errors appear beneath Name and SKU
+4. Confirm the dialog stays open",Field-level errors; nothing created.,,Active,initial
+TC-033,"Products — create, edit, delete",a malformed SKU is rejected,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Click **New product**
+3. Enter name `Bad Sku Product`, SKU `BADSKU`, price `10`, stock `1`
+4. Click **Create product**
+5. Confirm an error under SKU describes the required format","The SKU pattern (four letters, hyphen, four digits) is enforced.",,Active,initial
+TC-034,"Products — create, edit, delete",a negative price is rejected,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Click **New product**
+3. Enter name `Neg Price`, SKU `TEST-7777`, price `-5`, stock `1`
+4. Click **Create product**
+5. Confirm an error under Price states it must be greater than zero",Negative prices are blocked.,,Active,initial
+TC-035,"Products — create, edit, delete",a duplicate SKU is refused by the server,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Click **New product**
+3. Enter name `Duplicate SKU Test`, SKU `ELEC-1001` (already used), price `10`, stock `1`
+4. Click **Create product**
+5. Confirm an error appears **under the SKU field** saying it must be unique",A server-side uniqueness error attached to the right field.,,Active,initial
+TC-036,"Products — create, edit, delete",a forced server error surfaces in the dialog,Negative,"1. Sign in and navigate to `/products?reset=true`
+2. Click **New product**
+3. Enter name `fail this product`, SKU `TEST-9002`, price `5`, stock `1`
+4. Click **Create product**
+5. Confirm an error banner appears **inside the dialog** and it stays open","A banner-level error, distinct from the field errors above.",A name containing `fail` deliberately returns HTTP 500.,Active,initial
+TC-037,Forms and wizard,submit the forms showcase,Happy,"1. Sign in and navigate to `/forms`
+2. Enter `Test User` as Full name and `tester@test.com` as Email
+3. Select the **Pro** plan
+4. Choose **Sri Lanka** in the Country field
+5. Tick the **Automation** interest
+6. Set Start date `2026-01-01` and End date `2026-02-01`
+7. Click **Submit form** — a success message appears and the submitted values are displayed
+8. Confirm the displayed values include `tester@test.com`",A complete form submits and echoes back what was sent.,,Active,initial
+TC-038,Forms and wizard,the country combobox filters and selects,Happy,"1. Sign in and navigate to `/forms`
+2. Click the Country field and type `Sri`
+3. Confirm the option list narrows to matching countries
+4. Press the Down arrow, then Enter
+5. Confirm the field shows the selected country",The combobox is usable by typing and by keyboard.,,Active,initial
+TC-039,Forms and wizard,empty submit is blocked,Negative,"1. Sign in and navigate to `/forms`
+2. Click **Submit form** with the form empty
+3. Confirm a validation error appears under Full name
+4. Confirm no success message or submitted-values block appears",Validation blocks submission.,,Active,initial
+TC-040,Forms and wizard,end date before start date is rejected,Negative,"1. Sign in and navigate to `/forms`
+2. Set Start date `2026-05-01` and End date `2026-04-01`
+3. Click elsewhere to move focus off the End date field
+4. Confirm an error under **End date** says it must be on or after the start date",The invalid range is rejected at the End date field.,,Active,initial
+TC-041,Forms and wizard,a rejected submission shows a server error,Negative,"1. Sign in and navigate to `/forms`
+2. Fill the form as in TC-037, but enter the email as `fail@test.com`
+3. Click **Submit form**
+4. Confirm an error message appears and **no** success block is shown",The server error surfaces and is not mistaken for success.,,Active,initial
+TC-042,Forms and wizard,the wizard completes,Happy,"1. Sign in and navigate to `/forms/wizard`
+2. Enter first name `Ada`, last name `Lovelace`, email `ada@test.com`, click **Next**
+3. Enter company `Analytical Engines`, select team size `11-50`, click **Next**
+4. Enter street `1 Ada Way`, city `London`, postcode `EC1A 1BB`, click **Next**
+5. On the review step, confirm the email shown is `ada@test.com`
+6. Click **Submit registration** — a completion message appears",Each step accepts valid input; the review reflects everything entered.,,Active,initial
+TC-043,Forms and wizard,going back preserves entered values,Happy,"1. Sign in and navigate to `/forms/wizard`
+2. Complete step 1 with first name `Ada`, last name `Lovelace`, email `ada@test.com`, click **Next**
+3. Click **Back**
+4. Confirm all three step-1 values are still filled in",Navigating backwards does not lose data.,,Active,initial
+TC-044,Forms and wizard,an incomplete step blocks Next,Negative,"1. Sign in and navigate to `/forms/wizard`
+2. Click **Next** with step 1 empty
+3. Confirm validation errors appear and the wizard stays on step 1
+4. Confirm the step indicator still reads step 1",Progress is gated on the current step validating.,,Active,initial
+TC-045,UI playground,"tabs, accordion, and dialog respond",Happy,"1. Sign in and navigate to `/ui-playground`
+2. Click the **Activity** tab — its panel becomes visible and Overview is hidden
+3. Focus the tab list and press the **Right arrow** — the next tab activates
+4. Click an accordion heading — its answer expands
+5. Click **Open dialog**, then press **Escape** — the dialog closes
+6. Click **Open dialog** again, then **Cancel** — the page records the action as cancelled",Each component shows and hides content; Escape and Cancel both close the dialog.,,Active,initial
+TC-046,UI playground,the embedded frame is interactive,Happy,"1. Sign in and navigate to `/ui-playground`
+2. Locate the embedded widget frame showing ""Inside the iframe""
+3. Click **Click me** **inside** the frame
+4. Confirm `clicked inside iframe` appears inside the frame",Content inside the frame responds and updates within the frame.,,Active,initial
+TC-047,UI playground,"a link opens a new tab, and the list loads more",Happy,"1. Sign in and navigate to `/ui-playground`
+2. Click **Open a new tab** — a new browser tab opens showing a popup heading
+3. Close it and return
+4. Confirm the scrollable list reports 20 rows
+5. Click **Load more** — the count rises to 40",The popup is capturable and the list grows in batches of 20.,,Active,initial
+TC-048,Settings and admin,theme persists across a reload,Happy,"1. Sign in and navigate to `/settings`
+2. Select the **Dark** theme — the page switches to dark colours
+3. Reload the page
+4. Confirm the page is **still** dark and Dark remains selected
+5. Select **Light** to restore the default",The preference survives a reload.,,Active,initial
+TC-049,Settings and admin,reset restores seeded data,Happy,"1. Sign in and navigate to `/products?reset=true`
+2. Delete any one product — the count drops to `19`
+3. Navigate to `/settings` and click **Reset app data**
+4. Navigate back to `/products`
+5. Confirm the total count is `20` again",The deleted product returns and the catalogue is back to seed state.,,Active,initial
+TC-050,Settings and admin,an administrator reaches the admin page,Happy,"1. Sign in as `admin@test.com` / `Admin123!`
+2. Confirm the sidebar shows an **Admin** link
+3. Navigate to `/admin`
+4. Confirm a table of user accounts is visible",Admins reach the page and see the account list.,,Active,initial
+TC-051,Settings and admin,a standard user is redirected away from `/admin`,Negative,"1. Sign in as `user@test.com` / `User123!`
+2. Confirm the sidebar has **no** Admin link
+3. Navigate directly to `/admin`
+4. Confirm the browser is redirected to the dashboard",The role guard blocks both the link and the URL.,The redirect is client-side — wait for the dashboard to render rather than checking the URL immediately.,Active,initial
+TC-052,Settings and admin,an unknown route shows the 404 page,Negative,"1. Sign in as `user@test.com` / `User123!`
+2. Navigate to `/no-such-route`
+3. Confirm a ""not found"" page appears with a link back to the dashboard",Unknown routes render the 404 page rather than a blank screen.,,Active,initial

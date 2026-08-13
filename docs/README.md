@@ -29,6 +29,8 @@ Each follows the [frontend feature specification template](./feature-spec-templa
 | [Testing guide](./testing-guide.md) | Fixtures, selector conventions, reset strategy, known pitfalls |
 | [web-app-tester](./web-app-tester.md) | PR-triggered browser agent: config, auth storage states, webhook rules |
 | [Test generation instructions](./test-generation-instructions.md) | Rules for generating Playwright specs from the manual test cases |
+| [PR test agent prompt](./pr-test-agent-prompt.md) | Generic prompt: run the case sheet on each PR and propose new cases |
+| [`test-cases.csv`](../test-cases.csv) | The 52-case sheet the PR agent reads and proposes against |
 
 ## Reference
 
