@@ -15,6 +15,34 @@
 
 Statuses mean specific things: `BLOCKED` covers a step that failed after retries, was skipped as read-only, or hit an auth gate. **Blocked never means "passed"** — an auth failure will not be reported as success.
 
+## Supplying a test plan
+
+The plugin scans the **PR body and all comments** for a structured plan. It does **not** read repository files, and it does **not** read the PR diff or changed files — so it has no idea what a PR changed unless you tell it.
+
+With no plan found it auto-generates one from the title, description, and commits, then posts that as a comment before running. Those generated plans are mostly "does the page load" and miss every deliberate error path.
+
+### Format it actually parses
+
+Its detection rules are strict. A plan must be:
+
+- Under a heading it recognises: **Test Plan**, QA Steps, Testing Steps, Acceptance Criteria, or Verification Steps
+- **One contiguous numbered list** — the skill derives "a flat numbered list of test cases"
+- Containing at least two action verbs from: Navigate, Go to, Click, Tap, Fill, Enter, Type, Verify, Assert, Check, Confirm, Ensure, Submit, Expect, Open, Close, Scroll, Select, Upload
+- At least three test cases
+
+> **The plan must be flat.** [`docs/test-plan.md`](./test-plan.md) and [`docs/test-plan-smoke.md`](./test-plan-smoke.md) are written for humans and for the [test generator](./test-generation-instructions.md): separate `## TC-NNN` sections, each with its own list restarting at 1. That structure does **not** match the "one contiguous numbered list" rule.
+>
+> Paste [`docs/test-plan-flat.md`](./test-plan-flat.md) instead — the same eight cases flattened into 46 sequential steps, each tagged `[TC-NNN]` so results stay traceable.
+
+### Order matters
+
+Post the comment **before** applying the `ai-dlc/pr/test-web-app` label. The plugin looks for the plan when the label fires; labelling first finds nothing.
+
+### What you will not get
+
+- **Screenshot images on GitHub.** Screenshots are captured but only described in words — GitHub comments do not support attachments via the CLI. Azure DevOps uploads them properly.
+- **Any file in your repository.** The plugin posts a comment and nothing else; its `_wat_run/` working directory is deleted after every run. For committed spec files, use the [test generator](./test-generation-instructions.md) instead.
+
 ## Configuration
 
 [`.web-app-tester.json`](../.web-app-tester.json) at the repo root:
