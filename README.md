@@ -2,7 +2,9 @@
 
 A React application built to be **tested**, not shipped. It exists so an AI agent (or a person) can write and run Playwright suites against a realistic app with stable selectors, deterministic data, and deliberately reachable error states.
 
-See [REQUIREMENTS.md](./REQUIREMENTS.md) for the full spec and [test-map.json](./test-map.json) for the machine-readable map of every route, testid, and behavior.
+**[Full documentation →](./docs/README.md)** — one page per feature, plus architecture, mock API, and testing guides.
+
+See also [REQUIREMENTS.md](./REQUIREMENTS.md) for the original spec and [test-map.json](./test-map.json) for the machine-readable map of every route, testid, and behavior.
 
 ## Quick start
 
