@@ -20,5 +20,6 @@
       "defaultRole": "user"
     }
   },
-  "authSetupCommand": "npm run auth:refresh"
+  "authSetupCommand": "npm run auth:refresh",
+  "testSheet": "test-cases.csv"
 }
