@@ -24,9 +24,11 @@ Each follows the [frontend feature specification template](./feature-spec-templa
 
 | Document | Contents |
 |---|---|
-| [Test plan](./test-plan.md) | 24 cases with positive and negative coverage — paste into a PR for the agent |
+| [Test plan](./test-plan.md) | 52 cases, happy and negative paths — the manual-test source of truth |
+| [Test plan — smoke](./test-plan-smoke.md) | 8-case subset sized for one PR comment and the per-run budget |
 | [Testing guide](./testing-guide.md) | Fixtures, selector conventions, reset strategy, known pitfalls |
 | [web-app-tester](./web-app-tester.md) | PR-triggered browser agent: config, auth storage states, webhook rules |
+| [Test generation instructions](./test-generation-instructions.md) | Rules for generating Playwright specs from the manual test cases |
 
 ## Reference
 

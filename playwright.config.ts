@@ -5,7 +5,10 @@ import { defineConfig, devices } from '@playwright/test'
 export const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5173'
 
 export default defineConfig({
-  testDir: './e2e',
+  // Repo root so both the hand-written suite in e2e/ and generated specs under
+  // generated/Tests/ are discovered.
+  testDir: '.',
+  testMatch: ['e2e/**/*.spec.ts', 'generated/**/*.spec.ts'],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
