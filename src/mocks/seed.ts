@@ -1,5 +1,5 @@
-import { NotificationKind, ProductCategory, ProductStatus, UserRole } from '@/enums'
-import type { AppNotification, Product, SavedView, User } from '@/types'
+import { NotificationKind, ProductCategory, ProductStatus, TagColor, UserRole } from '@/enums'
+import type { AppNotification, Product, SavedView, Tag, User } from '@/types'
 
 export interface SeedAccount extends User {
   password: string
@@ -76,4 +76,10 @@ export const SEED_NOTIFICATIONS: AppNotification[] = [
 export const SEED_SAVED_VIEWS: SavedView[] = [
   { id: 'sv-1', name: 'Active electronics', category: ProductCategory.Electronics, status: ProductStatus.Active, createdAt: '2025-02-01T10:00:00.000Z' },
   { id: 'sv-2', name: 'Draft apparel', category: ProductCategory.Apparel, status: ProductStatus.Draft, createdAt: '2025-02-02T10:00:00.000Z' },
+]
+
+export const SEED_TAGS: Tag[] = [
+  { id: 't-1', name: 'Featured', color: TagColor.Amber, productCount: 4, createdAt: '2025-02-01T11:00:00.000Z' },
+  { id: 't-2', name: 'Clearance', color: TagColor.Rose, productCount: 2, createdAt: '2025-02-02T11:00:00.000Z' },
+  { id: 't-3', name: 'New arrival', color: TagColor.Green, productCount: 0, createdAt: '2025-02-03T11:00:00.000Z' },
 ]

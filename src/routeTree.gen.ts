@@ -24,6 +24,7 @@ import { Route as AuthenticatedProductsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedSavedViewsIndexRouteImport } from './routes/_authenticated/saved-views/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedTagsIndexRouteImport } from './routes/_authenticated/tags/index'
 import { Route as AuthenticatedUiPlaygroundIndexRouteImport } from './routes/_authenticated/ui-playground/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -106,6 +107,11 @@ const AuthenticatedSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTagsIndexRoute = AuthenticatedTagsIndexRouteImport.update({
+  id: '/tags/',
+  path: '/tags/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedUiPlaygroundIndexRoute =
   AuthenticatedUiPlaygroundIndexRouteImport.update({
     id: '/ui-playground/',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/saved-views/': typeof AuthenticatedSavedViewsIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/tags/': typeof AuthenticatedTagsIndexRoute
   '/ui-playground/': typeof AuthenticatedUiPlaygroundIndexRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/saved-views': typeof AuthenticatedSavedViewsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
+  '/tags': typeof AuthenticatedTagsIndexRoute
   '/ui-playground': typeof AuthenticatedUiPlaygroundIndexRoute
 }
 export interface FileRoutesById {
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/saved-views/': typeof AuthenticatedSavedViewsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/_authenticated/tags/': typeof AuthenticatedTagsIndexRoute
   '/_authenticated/ui-playground/': typeof AuthenticatedUiPlaygroundIndexRoute
 }
 export interface FileRouteTypes {
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/saved-views/'
     | '/settings/'
+    | '/tags/'
     | '/ui-playground/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/saved-views'
     | '/settings'
+    | '/tags'
     | '/ui-playground'
   id:
     | '__root__'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/'
     | '/_authenticated/saved-views/'
     | '/_authenticated/settings/'
+    | '/_authenticated/tags/'
     | '/_authenticated/ui-playground/'
   fileRoutesById: FileRoutesById
 }
@@ -330,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tags/': {
+      id: '/_authenticated/tags/'
+      path: '/tags'
+      fullPath: '/tags/'
+      preLoaderRoute: typeof AuthenticatedTagsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ui-playground/': {
       id: '/_authenticated/ui-playground/'
       path: '/ui-playground'
@@ -366,6 +385,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
   AuthenticatedSavedViewsIndexRoute: typeof AuthenticatedSavedViewsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+  AuthenticatedTagsIndexRoute: typeof AuthenticatedTagsIndexRoute
   AuthenticatedUiPlaygroundIndexRoute: typeof AuthenticatedUiPlaygroundIndexRoute
 }
 
@@ -379,6 +399,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
   AuthenticatedSavedViewsIndexRoute: AuthenticatedSavedViewsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+  AuthenticatedTagsIndexRoute: AuthenticatedTagsIndexRoute,
   AuthenticatedUiPlaygroundIndexRoute: AuthenticatedUiPlaygroundIndexRoute,
 }
 

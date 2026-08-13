@@ -2,6 +2,7 @@ import type {
   NotificationKind,
   ProductCategory,
   ProductStatus,
+  TagColor,
   UserRole,
 } from '@/enums'
 
@@ -85,6 +86,14 @@ export interface AppNotification {
   body: string
   kind: NotificationKind
   read: boolean
+  createdAt: string
+}
+
+export interface Tag {
+  id: string
+  name: string
+  color: TagColor
+  productCount: number
   createdAt: string
 }
 
