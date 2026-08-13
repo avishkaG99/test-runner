@@ -4,7 +4,7 @@ The richest screen in the app: a data table with search, filtering, sorting, and
 
 **Route:** `/products`
 **Source:** [`src/features/products/`](../../src/features/products/)
-**Related:** [Dashboard](./dashboard.md) · [Mock API — products](../mock-api.md#products) · [UI playground — dialogs](./ui-playground.md#dialog)
+**Related:** [Dashboard](./dashboard.md) · [Mock API — endpoints](../mock-api.md#endpoints) · [UI playground — dialogs](./ui-playground.md#dialog)
 
 ---
 
