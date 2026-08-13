@@ -28,3 +28,8 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# web-app-tester storage states (session credentials - never commit)
+/tests/e2e/.auth/
+# web-app-tester scratch dir
+/_wat_run/

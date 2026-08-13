@@ -1,0 +1,15 @@
+{
+  "defaultEnvironment": "preview",
+  "environments": {
+    "preview": {
+      "baseUrl": "http://localhost:5173",
+      "mutationsAllowed": true,
+      "storageStates": {
+        "admin": "tests/e2e/.auth/admin.json",
+        "user": "tests/e2e/.auth/user.json"
+      },
+      "defaultRole": "user"
+    }
+  },
+  "authSetupCommand": "npm run auth:refresh"
+}

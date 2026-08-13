@@ -25,6 +25,7 @@ If you are an AI agent planning test coverage, read [test-map.json](../test-map.
 | [Architecture](./architecture.md) | Stack, folder layering, import rules, why there is no service worker |
 | [Mock API](./mock-api.md) | Every endpoint, the seed data, latency and flaky mode |
 | [Testing guide](./testing-guide.md) | Fixtures, selector conventions, reset strategy, known pitfalls |
+| [web-app-tester](./web-app-tester.md) | PR-triggered browser agent: config, auth storage states, webhook rules |
 
 ## The five-second version
 

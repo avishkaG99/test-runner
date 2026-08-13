@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:chromium": "playwright test --project=chromium",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "auth:refresh": "tsx scripts/refresh-auth.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
@@ -41,6 +42,7 @@
     "msw": "^2.15.0",
     "oxlint": "^1.75.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.12",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
   }
