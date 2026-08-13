@@ -1,4 +1,5 @@
 import { chromium } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 
@@ -7,7 +8,32 @@ import path from 'node:path'
  * signed in. Referenced by `authSetupCommand` in .web-app-tester.json, which
  * the plugin runs when a session has expired.
  */
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5173'
+/**
+ * Falls back to the configured default environment rather than assuming
+ * localhost, so storage states are generated against the same origin the
+ * plugin will test - localStorage sessions are origin-scoped and would be
+ * ignored if written for the wrong host.
+ */
+function resolveBaseUrl(): string {
+  if (process.env.BASE_URL) return process.env.BASE_URL
+
+  try {
+    const config = JSON.parse(
+      readFileSync(path.resolve('.web-app-tester.json'), 'utf8'),
+    ) as {
+      defaultEnvironment?: string
+      environments?: Record<string, { baseUrl?: string }>
+    }
+    const name = process.env.WAT_ENV ?? config.defaultEnvironment
+    const url = name ? config.environments?.[name]?.baseUrl : undefined
+    if (url) return url
+  } catch {
+    /* fall through to the local default */
+  }
+  return 'http://localhost:5173'
+}
+
+const BASE_URL = resolveBaseUrl()
 const OUT_DIR = path.resolve('tests/e2e/.auth')
 
 const ROLES = [

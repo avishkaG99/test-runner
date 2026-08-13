@@ -37,9 +37,24 @@ Statuses mean specific things: `BLOCKED` covers a step that failed after retries
 }
 ```
 
-> **`baseUrl` must point at a URL the plugin can actually reach.** `localhost:5173` only works if the plugin runs on the same machine. For CI-triggered runs, change it to your deployed preview URL — otherwise every step comes back `BLOCKED`.
+`preview` points at the deployed Vercel URL and is the default; `local` exists for running the plugin against a dev server on the same machine (`--env local`).
 
 Without this file the plugin scrapes a URL out of PR comments and runs **unauthenticated**, which for this app means it never gets past the sign-in screen.
+
+### Vercel Deployment Protection
+
+Vercel enables **Deployment Protection** on preview deployments by default for team accounts. Protected URLs return `302` to `vercel.com/sso-api` instead of the app, so the plugin's browser lands on a Vercel login page and reports every step `BLOCKED`.
+
+Check with:
+
+```bash
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://<preview-url>/sign-in
+```
+
+A `302` to `vercel.com/sso-api` means protection is on. Two fixes:
+
+- **Disable it** — Vercel → project → Settings → Deployment Protection → Vercel Authentication → *Disabled* (or *Only Production*). Reasonable for this app: no real data, no real backend, and the seeded credentials are already public.
+- **Bypass token** — enable *Protection Bypass for Automation* and pass the secret as an `x-vercel-protection-bypass` header or query param. Keeps previews private, but the plugin must be able to send it.
 
 ## Authentication
 
