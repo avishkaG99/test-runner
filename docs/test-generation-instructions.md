@@ -595,14 +595,49 @@ The smoke file is a strict subset of the full plan — **never generate from bot
 
 **Reuse these rather than rebuilding them.** In particular, do not write a new login helper — see §30.
 
-### Application reference
+### Application reference — read these before writing locators
 
-| File | Contents |
+These describe the application. They are **not** a source of scope: they never add, remove, or change a test case (§3). Use them only to resolve locators, routes, and expected values that the manual case names but does not spell out.
+
+| File | Read it for |
 |---|---|
-| `test-map.json` | Machine-readable inventory of every route, testid, and behavior |
-| `docs/features/` | One spec per feature, each with a test-surface appendix |
+| `test-map.json` | Every route, testid, and behavior in machine-readable form |
+| `docs/features/<feature>.md` | Per-feature detail: data flow, validation rules, timing caveats, and a **Appendix — Test surface** section listing that feature's testids |
 
-`test-map.json` is the fastest way to confirm a testid exists before using it. If a locator is not in that file and not visible via MCP inspection, add a `TODO` rather than inventing one (§7).
+**Required order of consultation when a locator or expected value is unclear:**
+
+1. The manual test case itself — it may name the element in words
+2. `test-map.json` — confirm the testid exists
+3. The relevant `docs/features/<feature>.md` appendix — for dynamic testids and caveats
+4. MCP inspection, if available (§6)
+5. If still unresolved, add a `TODO` (§21) — **never invent a selector**
+
+### Which feature doc covers which cases
+
+Read the doc matching the feature under test. Do not read all nine — that wastes context (§25).
+
+| Cases | Plan section | Feature doc |
+|---|---|---|
+| TC-001 – TC-007 | Authentication — sign in | `docs/features/authentication.md` |
+| TC-008 – TC-010 | Authentication — session | `docs/features/authentication.md` |
+| TC-011 – TC-016 | Sign up and password reset | `docs/features/authentication.md` |
+| TC-017 – TC-020 | Dashboard | `docs/features/dashboard.md` |
+| TC-021 – TC-025 | Products — browsing | `docs/features/products.md` |
+| TC-026 – TC-036 | Products — create, edit, delete | `docs/features/products.md` |
+| TC-037 – TC-041 | Forms showcase | `docs/features/forms.md` |
+| TC-042 – TC-044 | Wizard | `docs/features/wizard.md` |
+| TC-045 – TC-047 | UI playground | `docs/features/ui-playground.md` |
+| TC-048 – TC-049 | Settings | `docs/features/settings.md` |
+| TC-050 – TC-051 | Admin role guard | `docs/features/admin.md` |
+| TC-052 | 404 routing | `docs/architecture.md` (route guards) |
+
+`docs/features/reports.md` covers the long-running report operation. No case in the current plan exercises it — do not generate one (§3).
+
+Each feature doc's **Appendix — Test surface** is the authoritative locator list for that feature, including dynamic patterns such as `products-edit-<id>` and `wizard-review-<field>` that `test-map.json` shows only as templates.
+
+### Why this matters
+
+Several manual cases describe an element in user language — "the bulk delete button", "the strength label" — without naming a testid. The feature doc's appendix resolves it. Guessing instead produces a locator that compiles, passes type-checking, and fails at runtime.
 
 If no manual test cases are supplied, generate no tests and clearly report that the required manual-test input is missing.
 
