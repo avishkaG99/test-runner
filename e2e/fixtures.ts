@@ -1,9 +1,26 @@
 import { test as base, expect, type Page } from '@playwright/test'
 
+/**
+ * Seeded fixture accounts. These are public test data documented in the README,
+ * not real credentials — but they stay overridable by environment variable so
+ * the same suite can run against an environment with different accounts.
+ */
 export const ACCOUNTS = {
-  admin: { email: 'admin@test.com', password: 'Admin123!', name: 'Ada Admin' },
-  user: { email: 'user@test.com', password: 'User123!', name: 'Sam Standard' },
-  locked: { email: 'locked@test.com', password: 'Locked123!', name: 'Lee Locked' },
+  admin: {
+    email: process.env.TEST_ADMIN_EMAIL ?? 'admin@test.com',
+    password: process.env.TEST_ADMIN_PASSWORD ?? 'Admin123!',
+    name: 'Ada Admin',
+  },
+  user: {
+    email: process.env.TEST_USER_EMAIL ?? 'user@test.com',
+    password: process.env.TEST_USER_PASSWORD ?? 'User123!',
+    name: 'Sam Standard',
+  },
+  locked: {
+    email: process.env.TEST_LOCKED_EMAIL ?? 'locked@test.com',
+    password: process.env.TEST_LOCKED_PASSWORD ?? 'Locked123!',
+    name: 'Lee Locked',
+  },
 } as const
 
 export type AccountKey = keyof typeof ACCOUNTS

@@ -145,7 +145,7 @@ await page.route('**/api/dashboard/stats', async (route) => {
 release()
 ```
 
-Alternatively raise the latency in [Settings](./features/settings.md#latency).
+Alternatively raise the latency in [Settings](./features/settings.md).
 
 ### Long operations need explicit timeouts
 

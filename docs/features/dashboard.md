@@ -1,63 +1,122 @@
-# Dashboard
+# Frontend Feature Specification — Dashboard
 
-The landing page after sign-in. Small on purpose — its job is to exercise async loading and role-conditional rendering, not to be a rich screen.
+**Purpose:** Give a signed-in user an at-a-glance summary of the catalogue, and show admins one section standard users cannot see.
 
-**Route:** `/dashboard`
-**Source:** [`src/features/dashboard/index.tsx`](../../src/features/dashboard/index.tsx)
-**Related:** [Authentication](./authentication.md) · [Admin](./admin.md) · [Mock API — seed data](../mock-api.md#seed-data)
+**Owner / driver:** Test-target maintainers
+
+**Status:** Approved
+
+**Related:** [Test plan TC-006](../test-plan.md) · [Authentication](./authentication.md) · [Products](./products.md) · [Admin](./admin.md) · [`src/features/dashboard/index.tsx`](../../src/features/dashboard/index.tsx)
+
+**Version / last updated:** 1.0, 2026-08-13
 
 ---
 
-## Stat cards
+## 1. Requirement
 
-Four cards derived from the product catalogue:
+### 1.1 Summary
+- The landing page after sign-in. Small by design: its job is to exercise async loading and role-conditional rendering.
+- Doubles as the confirmation that authentication produced the *right* account, since it renders the signed-in email and role.
 
-| Card | Testid | Seed value |
-|---|---|---|
-| Total products | `dashboard-stat-totalProducts-value` | 20 |
-| Active products | `dashboard-stat-activeProducts-value` | 15 |
-| Low stock | `dashboard-stat-lowStock-value` | 6 |
-| Inventory value | `dashboard-stat-totalValue-value` | currency-formatted sum |
+### 1.2 Scope
+- **In scope**
+  - Four statistic cards derived from live product data
+  - A visible skeleton state while stats load
+  - Manual refresh
+  - Admin-only panel, rendered by role
+  - Error state when the stats request fails
+- **Out of scope**
+  - Charts, trends, or historical comparison
+  - Configurable or reorderable widgets
+- **Assumptions**
+  - Stats derive from the same store [Products](./products.md) mutates, so creating or deleting changes these numbers
 
-"Low stock" counts products with stock greater than 0 but under 10 — deliberately *not* including out-of-stock items, so the number is not trivially derivable.
+---
 
-These values change when [products](./products.md) are created or deleted, because both mutations invalidate the dashboard query. That makes the dashboard a useful assertion target after a CRUD flow.
+## 2. Backend API references (integration only)
 
-## The loading state
+| Purpose | Method | Endpoint | Request | Response | Notes |
+|---|---|---|---|---|---|
+| Summary stats | `GET` | `/api/dashboard/stats` | — | `{ totalProducts, activeProducts, lowStock, totalValue }` | Auth required; 503 in flaky mode |
 
-Stats load asynchronously behind the mock API's simulated latency (~400ms by default). While in flight, four skeleton cards render under `dashboard-stats-loading`; once resolved, they are replaced by `dashboard-stats`.
+---
 
-This is deliberate. A test target where data appears instantly teaches nothing about waiting, so the delay exists to force proper handling.
+## 3. Current frontend behavior
 
-> **Catching the skeleton reliably:** asserting on `dashboard-stats-loading` right after clicking sign-in races the ~400ms response and is flaky in slower browsers. Hold the response open with `page.route()` instead:
->
-> ```ts
-> let release = () => {}
-> const held = new Promise<void>((r) => { release = r })
-> await page.route('**/api/dashboard/stats', async (route) => {
->   await held
->   await route.continue()
-> })
-> // ... sign in, assert the skeleton is visible ...
-> release()
-> ```
->
-> This is how [`e2e/dashboard.spec.ts`](../../e2e/dashboard.spec.ts) does it.
+### 3.1 Implemented now
+- `src/features/dashboard/index.tsx` — cards, skeletons, refresh, admin panel
+- `src/hooks/api/dashboard.ts` — `useDashboardStatsQuery`, invalidated by product mutations
 
-## Role-conditional UI
+### 3.2 Gaps / TODO in current code
+- Cards are static; none link through to a filtered products view
+- "Low stock" uses a hard-coded threshold of 10
 
-An extra panel (`dashboard-admin-panel`) renders only for the admin role, alongside the Admin nav item in the sidebar. For a standard user both are absent from the DOM entirely — not hidden with CSS — so `toBeHidden()` and `toHaveCount(0)` both work.
+---
 
-The signed-in user's email and role are rendered in the header area as `dashboard-user-email` and `dashboard-user-role`, which is the cheapest way for a test to confirm *which* account a fixture actually produced.
+## 4. Screen flow and interactions
 
-## Refresh
+### 4.1 Load flow
+- **Step 1:** Guard resolves; screen mounts from `@/features/dashboard`
+- **Step 2:** `useDashboardStatsQuery` fires against the ~400ms mock latency
+- **Step 3:** Values render into four cards; currency formatted via `Intl.NumberFormat`
+- **Loading state:** Four skeleton cards under `dashboard-stats-loading`
+- **Empty state:** Not applicable — stats always return numbers, possibly zero
 
-`dashboard-refresh-button` refetches the stats query. While fetching it shows a spinner via the shared Button's `loading` prop, which sets `aria-busy`.
+### 4.2 Submit flow
+No mutations. The only action is **Refresh**, which refetches and shows a spinner on the button.
 
-## Testids
+- **Failure UX:** `dashboard-error` renders the API message
+- **Retry/idempotency:** Retries disabled app-wide, so failures surface immediately
 
-`dashboard-page`, `dashboard-stats`, `dashboard-stats-loading`, `dashboard-refresh-button`, `dashboard-error`, `dashboard-user-email`, `dashboard-user-role`, `dashboard-admin-panel`, plus `dashboard-stat-<key>` and `dashboard-stat-<key>-value` for each of the four cards.
+---
 
-## Error state
+## 5. Frontend data model mapping
 
-If the stats request fails — reachable by turning on flaky mode in [Settings](./settings.md) — `dashboard-error` renders with the message from the API. Query retries are disabled app-wide precisely so these failures surface instead of being silently retried away.
+| UI field | Form path | API field | Type | Required | Rules |
+|---|---|---|---|---|---|
+| Total products | — | `totalProducts` | number | Y | Read-only |
+| Active products | — | `activeProducts` | number | Y | Status `active` only |
+| Low stock | — | `lowStock` | number | Y | `0 < stock < 10`; excludes out-of-stock |
+| Inventory value | — | `totalValue` | number | Y | Σ price × stock, currency formatted |
+
+- **State ownership:** Entirely TanStack Query cache; no local form state
+- **Transformations:** `formatCurrency()` on `totalValue` only
+- **Error mapping:** `ApiError.message` → `dashboard-error` banner
+
+---
+
+## 6. Testing and quality
+
+- **Unit tests:** `formatCurrency()` output
+- **Integration tests:** [`e2e/dashboard.spec.ts`](../../e2e/dashboard.spec.ts) — skeleton→content, seeded totals, refresh, expiry, 404
+- **Manual/agent plan:** [TC-006](../test-plan.md)
+- **Not required in this feature:** Visual regression on card layout
+
+---
+
+## 7. Specs to apply
+
+- `React-Specs/data/data-fetching-api-client-spec.md`
+- `React-Specs/ui-ux/error-handling-user-feedback-spec.md`
+- `React-Specs/quality-ops/testing-strategy-spec.md`
+
+---
+
+## 8. Delivery checklist
+
+- [x] Feature spec linked to work item/PR
+- [x] UI behavior implemented according to this spec
+- [x] API integration and error handling verified
+- [x] Integration tests cover this scope
+- [x] `npm run lint`, typecheck, and build pass
+- [x] No secrets committed
+
+---
+
+## Appendix — Test surface
+
+**Seeded values:** Total 20 · Active 15 · Low stock 6 · Inventory value = Σ price × stock
+
+**Testids:** `dashboard-page`, `dashboard-stats`, `dashboard-stats-loading`, `dashboard-refresh-button`, `dashboard-error`, `dashboard-user-email`, `dashboard-user-role`, `dashboard-admin-panel`, plus `dashboard-stat-<key>` and `dashboard-stat-<key>-value` for `totalProducts`, `activeProducts`, `lowStock`, `totalValue`
+
+**Catching the skeleton:** 400ms is enough to render but too short to assert reliably. Hold the response with `page.route()`, or raise latency in [Settings](./settings.md).

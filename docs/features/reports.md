@@ -1,53 +1,129 @@
-# Reports
+# Frontend Feature Specification — Reports
 
-A single long-running operation with live progress and a cancel button. Exists so there is something that takes seconds rather than milliseconds, and something that can be interrupted partway.
+**Purpose:** Provide one operation that takes seconds rather than milliseconds and can be interrupted partway, so progress and cancellation are testable.
 
-**Route:** `/reports`
-**Source:** [`src/features/reports/index.tsx`](../../src/features/reports/index.tsx)
-**Related:** [Forms — slow submit](./forms.md#slow-submit) · [Testing guide](../testing-guide.md)
+**Owner / driver:** Test-target maintainers
+
+**Status:** Approved
+
+**Related:** [Test plan TC-014](../test-plan.md) · [Forms — slow submit](./forms.md) · [Testing guide](../testing-guide.md) · [`src/features/reports/index.tsx`](../../src/features/reports/index.tsx)
+
+**Version / last updated:** 1.0, 2026-08-13
 
 ---
 
-## The operation
+## 1. Requirement
 
-Clicking `reports-generate-button` starts a ~4-second run that ticks progress every 100ms from 0 to 100.
+### 1.1 Summary
+- A ~4-second generation task with a live progress bar and a working cancel.
+- Everything else in the app resolves quickly; this is the only place a test must wait, and the only place it can interrupt.
 
-Progress is exposed as a proper ARIA progressbar with `aria-valuenow`, `aria-valuemin`, and `aria-valuemax`, plus a text percentage in `reports-progress-value`.
+### 1.2 Scope
+- **In scope**
+  - Progress advancing 0 → 100 over roughly four seconds
+  - Cancel that genuinely halts the run and freezes progress
+  - Reset returning to idle
+  - A textual status readable by tests
+  - Mutually exclusive Generate and Cancel controls
+- **Out of scope**
+  - Producing a real downloadable file
+  - Queuing, concurrency, or resuming a cancelled run
+  - Server-side generation — the timer is client-side
+- **Assumptions**
+  - Four seconds exceeds Playwright's default 5s expect timeout once other waits stack, so tests need explicit headroom
 
-## States
+---
 
-`reports-status` renders the current state as plain text, which makes it the simplest thing to assert on:
+## 2. Backend API references (integration only)
 
-| State | Meaning | Visible controls |
-|---|---|---|
-| `idle` | Not started, or reset | Generate |
-| `running` | In progress | Cancel |
-| `done` | Completed | Generate, Reset |
-| `cancelled` | Interrupted | Generate, Reset |
+None. The operation is simulated with a client-side interval, deliberately: it keeps the timing deterministic and independent of mock latency settings.
 
-The Generate and Cancel buttons are mutually exclusive — only one is in the DOM at a time — so a test cannot click Generate while a run is active.
+---
 
-## Completion and cancellation
+## 3. Current frontend behavior
 
-On completion, `reports-success` renders and a success toast fires. The run reaches 100%.
+### 3.1 Implemented now
+- `src/features/reports/index.tsx` — timer, progress bar, four states, cleanup on unmount
 
-Cancelling mid-run stops the timer immediately, renders `reports-cancelled`, and leaves progress frozen wherever it stopped. That frozen value is worth asserting: it proves cancellation actually halted the work rather than just changing a label.
+### 3.2 Gaps / TODO in current code
+- No artifact is produced; "done" is a state, not a file
+- Cancel does not abort a network request because there is none
+- Duration is fixed at 4s and not configurable from the UI
 
-`reports-reset-button` returns to idle with progress back at 0.
+---
 
-## Testing notes
+## 4. Screen flow and interactions
 
-The 4-second duration exceeds Playwright's default 5-second expect timeout once other waits are added, so give completion assertions explicit headroom:
+### 4.1 Load flow
+- **Step 1:** Guard resolves; screen mounts from `@/features/reports`
+- **Step 2:** No queries; status starts `idle`, progress `0`
+- **Step 3:** Only **Generate report** is shown
+- **Loading state:** The run *is* the loading state — progress bar plus Cancel
+- **Empty state:** Not applicable
+
+### 4.2 Submit flow
+- **Action:** Start a 100ms interval advancing progress by a fixed step
+- **Client validation:** None
+- **Success UX:** Status `done`, `reports-success` renders, success toast fires, progress reaches 100
+- **Failure UX:** Cancelling sets status `cancelled` and renders `reports-cancelled`; progress freezes where it stopped
+- **Retry/idempotency:** Reset then Generate starts cleanly from 0; the interval is cleared on unmount so navigating away leaves nothing running
+
+---
+
+## 5. Frontend data model mapping
+
+No API mapping. Local state only:
+
+| UI element | State | Type | Notes |
+|---|---|---|---|
+| Status text | `status` | enum | `idle` \| `running` \| `done` \| `cancelled` |
+| Progress bar | `progress` | number | 0–100; ARIA `aria-valuenow` |
+| Interval handle | `timerRef` | ref | Cleared on cancel, completion, and unmount |
+
+---
+
+## 6. Testing and quality
+
+- **Unit tests:** Progress step arithmetic; timer cleared on unmount
+- **Integration tests:** [`e2e/smoke.spec.ts`](../../e2e/smoke.spec.ts) — cancel mid-run, then a full run to completion
+- **Manual/agent plan:** [TC-014](../test-plan.md)
+- **Not required in this feature:** Real report generation or file download
+
+---
+
+## 7. Specs to apply
+
+- `React-Specs/ui-ux/error-handling-user-feedback-spec.md`
+- `React-Specs/quality-ops/testing-strategy-spec.md`
+
+---
+
+## 8. Delivery checklist
+
+- [x] Feature spec linked to work item/PR
+- [x] UI behavior implemented according to this spec
+- [x] Progress and cancellation verified
+- [x] Integration tests cover this scope
+- [x] `npm run lint`, typecheck, and build pass
+- [x] No secrets committed
+
+---
+
+## Appendix — Test surface
+
+**Testids:** `reports-page`, `reports-status`, `reports-progressbar`, `reports-progress-value`, `reports-generate-button`, `reports-cancel-button`, `reports-reset-button`, `reports-success`, `reports-cancelled`
+
+**States and visible controls**
+
+| Status | Controls shown |
+|---|---|
+| `idle` | Generate |
+| `running` | Cancel |
+| `done` | Generate, Reset |
+| `cancelled` | Generate, Reset |
+
+**Timing:** Allow at least 15 seconds when asserting completion:
 
 ```ts
-await page.getByTestId('reports-generate-button').click()
 await expect(page.getByTestId('reports-success')).toBeVisible({ timeout: 15_000 })
 ```
-
-To test cancellation without racing, assert the Cancel button is visible first — that confirms the run started — then click it.
-
-The timer is cleared on unmount, so navigating away mid-run does not leave it firing.
-
-## Testids
-
-`reports-page`, `reports-status`, `reports-progressbar`, `reports-progress-value`, `reports-generate-button`, `reports-cancel-button`, `reports-reset-button`, `reports-success`, `reports-cancelled`

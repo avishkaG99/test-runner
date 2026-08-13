@@ -8,12 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.e2e.json",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:report": "playwright show-report",
-    "auth:refresh": "tsx scripts/refresh-auth.ts"
+    "auth:refresh": "tsx scripts/refresh-auth.ts",
+    "plan:comment": "tsx scripts/build-test-plan-comment.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",

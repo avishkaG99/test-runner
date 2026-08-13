@@ -1,0 +1,65 @@
+name: Post test plan
+
+# The web-app-tester plugin reads test plans from the PR body and comments only —
+# it never reads repository files or the diff. This workflow bridges that gap by
+# rendering test-cases.csv into a comment the plugin can discover, so it runs the
+# team's agreed cases instead of auto-generating a happy-path-only substitute.
+#
+# It must run BEFORE the plugin's trigger label is applied.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      case_ids:
+        description: 'Comma-separated case IDs (blank = the smoke subset)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  post-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Render the plan
+        id: render
+        env:
+          # Keep the default within the plugin's per-run budget. Pass an empty
+          # string to workflow_dispatch to run every active case instead.
+          CASE_IDS: ${{ inputs.case_ids || 'TC-001,TC-002,TC-017,TC-021,TC-026,TC-031,TC-040,TC-051' }}
+        run: |
+          npx tsx scripts/build-test-plan-comment.ts test-cases.csv "$CASE_IDS" > plan.md
+          echo "steps=$(grep -c '^[0-9]\+\. ' plan.md)" >> "$GITHUB_OUTPUT"
+
+      - name: Post or update the plan comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Update the existing plan comment rather than adding a new one each
+          # push — several plans in a thread leaves the plugin no ordering rule
+          # for choosing between them.
+          existing=$(gh pr view "$PR" --json comments \
+            --jq '.comments[] | select(.body | startswith("# Test Plan")) | .id' | head -1)
+
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" \
+              -f body="$(cat plan.md)" > /dev/null
+            echo "Updated the existing plan comment (${{ steps.render.outputs.steps }} steps)."
+          else
+            gh pr comment "$PR" --body-file plan.md
+            echo "Posted a new plan comment (${{ steps.render.outputs.steps }} steps)."
+          fi
