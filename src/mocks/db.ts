@@ -1,7 +1,7 @@
 import { StorageKey } from '@/enums'
 import { readStorage, removeStorage, writeStorage } from '@/lib/storage'
-import type { AppNotification, Product } from '@/types'
-import { SEED_NOTIFICATIONS, SEED_PRODUCTS } from './seed'
+import type { AppNotification, Product, SavedView } from '@/types'
+import { SEED_NOTIFICATIONS, SEED_PRODUCTS, SEED_SAVED_VIEWS } from './seed'
 
 /**
  * In-browser "database" backing the MSW handlers. Persisted to localStorage so
@@ -20,6 +20,24 @@ export function resetDb() {
   writeStorage(StorageKey.Products, SEED_PRODUCTS)
   removeStorage(StorageKey.Notifications)
   writeStorage(StorageKey.Notifications, SEED_NOTIFICATIONS)
+  removeStorage(StorageKey.SavedViews)
+  writeStorage(StorageKey.SavedViews, SEED_SAVED_VIEWS)
+}
+
+export function getSavedViews(): SavedView[] {
+  return readStorage<SavedView[]>(StorageKey.SavedViews, SEED_SAVED_VIEWS)
+}
+
+export function saveSavedViews(views: SavedView[]) {
+  writeStorage(StorageKey.SavedViews, views)
+}
+
+export function nextSavedViewId(views: SavedView[]): string {
+  const maxN = views.reduce((max, v) => {
+    const n = Number.parseInt(v.id.replace(/^sv-/, ''), 10)
+    return Number.isFinite(n) && n > max ? n : max
+  }, 0)
+  return `sv-${maxN + 1}`
 }
 
 export function getNotifications(): AppNotification[] {
@@ -44,6 +62,9 @@ export function ensureSeeded() {
   if (notifications === null) {
     writeStorage(StorageKey.Notifications, SEED_NOTIFICATIONS)
   }
+
+  const savedViews = readStorage<SavedView[] | null>(StorageKey.SavedViews, null)
+  if (savedViews === null) writeStorage(StorageKey.SavedViews, SEED_SAVED_VIEWS)
 }
 
 /** Network simulation knobs, toggleable at runtime from the Settings page. */

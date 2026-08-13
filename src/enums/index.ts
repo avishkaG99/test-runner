@@ -41,6 +41,7 @@ export const StorageKey = {
   FlakyMode: 'tta.flakyMode',
   Latency: 'tta.latency',
   Notifications: 'tta.notifications',
+  SavedViews: 'tta.savedViews',
 } as const
 
 export type StorageKey = (typeof StorageKey)[keyof typeof StorageKey]

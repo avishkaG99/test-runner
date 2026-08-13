@@ -1,5 +1,5 @@
 import { NotificationKind, ProductCategory, ProductStatus, UserRole } from '@/enums'
-import type { AppNotification, Product, User } from '@/types'
+import type { AppNotification, Product, SavedView, User } from '@/types'
 
 export interface SeedAccount extends User {
   password: string
@@ -71,4 +71,9 @@ export const SEED_NOTIFICATIONS: AppNotification[] = [
   { id: 'n-3', title: 'Weekly report ready', body: 'Your inventory report has been generated.', kind: NotificationKind.Info, read: false, createdAt: '2025-02-03T09:00:00.000Z' },
   { id: 'n-4', title: 'Password changed', body: 'Your password was updated successfully.', kind: NotificationKind.Success, read: true, createdAt: '2025-02-04T09:00:00.000Z' },
   { id: 'n-5', title: 'Scheduled maintenance', body: 'Service will pause briefly on Sunday.', kind: NotificationKind.Info, read: true, createdAt: '2025-02-05T09:00:00.000Z' },
+]
+
+export const SEED_SAVED_VIEWS: SavedView[] = [
+  { id: 'sv-1', name: 'Active electronics', category: ProductCategory.Electronics, status: ProductStatus.Active, createdAt: '2025-02-01T10:00:00.000Z' },
+  { id: 'sv-2', name: 'Draft apparel', category: ProductCategory.Apparel, status: ProductStatus.Draft, createdAt: '2025-02-02T10:00:00.000Z' },
 ]

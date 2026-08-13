@@ -7,17 +7,21 @@ import type {
   Paginated,
   Product,
   ProductInput,
+  SavedView,
   SignUpRequest,
 } from '@/types'
 import {
   getLatency,
   getNotifications,
   getProducts,
+  getSavedViews,
   isFlakyMode,
   nextProductId,
+  nextSavedViewId,
   resetDb,
   saveNotifications,
   saveProducts,
+  saveSavedViews,
 } from './db'
 import { LOW_STOCK_THRESHOLD, SEED_ACCOUNTS } from './seed'
 
@@ -340,6 +344,56 @@ export const handlers = [
 
     saveNotifications([])
     return HttpResponse.json({ cleared: true, unreadCount: 0 })
+  }),
+
+  http.get('/api/saved-views', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    const failure = await simulateNetwork()
+    if (failure) return failure
+
+    return HttpResponse.json({ items: getSavedViews() })
+  }),
+
+  http.post('/api/saved-views', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const payload = (await request.json()) as Partial<SavedView>
+    const name = (payload.name ?? '').trim()
+    if (!name) return error(400, { message: 'Name is required.' })
+    if (name.length > 40) {
+      return error(400, { message: 'Name must be 40 characters or fewer.' })
+    }
+
+    const views = getSavedViews()
+    if (views.some((v) => v.name.toLowerCase() === name.toLowerCase())) {
+      return error(409, { message: 'A view with that name already exists.' })
+    }
+
+    const view: SavedView = {
+      id: nextSavedViewId(views),
+      name,
+      category: payload.category ?? 'all',
+      status: payload.status ?? 'all',
+      createdAt: new Date().toISOString(),
+    }
+    saveSavedViews([...views, view])
+    return HttpResponse.json({ item: view }, { status: 201 })
+  }),
+
+  http.delete('/api/saved-views/:id', async ({ request, params }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const views = getSavedViews()
+    if (!views.some((v) => v.id === params.id)) {
+      return error(404, { message: 'Saved view not found.' })
+    }
+    saveSavedViews(views.filter((v) => v.id !== params.id))
+    return HttpResponse.json({ deleted: true })
   }),
 
   http.post('/api/app/reset', async () => {
