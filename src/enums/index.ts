@@ -24,6 +24,15 @@ export const ProductStatus = {
 
 export type ProductStatus = (typeof ProductStatus)[keyof typeof ProductStatus]
 
+export const NotificationKind = {
+  Info: 'info',
+  Warning: 'warning',
+  Success: 'success',
+} as const
+
+export type NotificationKind =
+  (typeof NotificationKind)[keyof typeof NotificationKind]
+
 export const StorageKey = {
   Token: 'tta.token',
   User: 'tta.user',
@@ -31,6 +40,7 @@ export const StorageKey = {
   Products: 'tta.products',
   FlakyMode: 'tta.flakyMode',
   Latency: 'tta.latency',
+  Notifications: 'tta.notifications',
 } as const
 
 export type StorageKey = (typeof StorageKey)[keyof typeof StorageKey]

@@ -15,6 +15,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/products', label: 'Products' },
+  { to: '/notifications', label: 'Notifications' },
   { to: '/forms', label: 'Forms' },
   { to: '/ui-playground', label: 'UI Playground' },
   { to: '/reports', label: 'Reports' },

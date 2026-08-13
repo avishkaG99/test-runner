@@ -2,7 +2,9 @@
   "defaultEnvironment": "preview",
   "environments": {
     "preview": {
-      "baseUrl": "https://test-runner-git-test-pr-avishkag-2033s-projects.vercel.app",
+      "previewFromComment": true,
+      "baseUrl": "https://test-runner-git-{branch}-avishkag-2033s-projects.vercel.app",
+      "fallbackUrl": "https://test-runner-avishkag-2033s-projects.vercel.app",
       "mutationsAllowed": true,
       "storageStates": {
         "user": "tests/e2e/.auth/user.json",
@@ -20,5 +22,6 @@
       "defaultRole": "user"
     }
   },
-  "authSetupCommand": "npm run auth:refresh"
+  "authSetupCommand": "npm run auth:refresh",
+  "testSheet": "test-cases.csv"
 }
