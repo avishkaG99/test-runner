@@ -129,6 +129,39 @@ Execute only rows whose `Status` is `Active`. Never execute `Draft` or `Retired`
 
 **If no sheet is found**, do not invent one and do not run ad-hoc checks. Report that no sheet exists, propose an initial set of cases under §11, and stop.
 
+### The sheet becomes `TEST_PLAN`
+
+When this prompt runs inside a plugin whose context-gathering phase emits a `TEST_PLAN` variable, the cases selected from the sheet **are** that `TEST_PLAN`. Set the accompanying origin field to reflect the sheet, not an auto-generated plan:
+
+| Variable | Value |
+|---|---|
+| `TEST_PLAN` | The `Active` cases selected under §8, as a numbered step list |
+| `PLAN_SOURCE` | `sourced from repository test case sheet (<path>)` |
+
+This matters because a host plugin will **auto-generate its own plan whenever it finds none**, and then execute that instead. An auto-generated plan is typically happy-path only and misses the negative cases the sheet exists to hold.
+
+If the run reports a plan source of *auto-generated*, the sheet was not picked up — treat that as a discovery failure, not as a result. Report it rather than accepting the generated plan's outcome as coverage.
+
+### Converting sheet rows into `TEST_PLAN` steps
+
+Flatten the selected rows into a single numbered list, tagging each step with its case `ID` so results stay traceable back to the sheet:
+
+```text
+1. [TC-001] Navigate to /sign-in
+2. [TC-001] Enter the standard user's email in the Email field
+3. [TC-001] Click the Sign in button
+4. [TC-001] Verify the dashboard is displayed
+5. [TC-002] Navigate to /sign-in
+...
+```
+
+Rules for the conversion:
+
+- Preserve each row's step order exactly; never reorder or merge steps.
+- Keep one action per numbered step.
+- Append the row's `Expected Result` as the final verification step for that case.
+- Never drop a step because it looks redundant — the `ID` tag is what makes §4's 1:1 mapping auditable.
+
 ---
 
 ## 7. Resolving the Environment
@@ -257,8 +290,11 @@ Produce a single pull request comment in this exact order. Omit any section that
 
 **Environment:** <url tested>
 **Sheet:** <path> (<n> active cases)
+**Plan source:** sourced from repository test case sheet
 **Cases run:** <n>
 ```
+
+State the plan source explicitly. If it is anything other than the sheet — an auto-generated plan, for instance — say so prominently, because the results then describe something other than the team's agreed coverage.
 
 ### 14.2 Results table
 
@@ -332,6 +368,11 @@ Before posting, confirm:
 - No proposal duplicates existing coverage.
 - No proposal describes behaviour you could not observe.
 
+**Plan source**
+- The executed plan came from the sheet, not an auto-generated substitute.
+- The reported plan source names the sheet and its path.
+- Every executed step carries its case `ID` tag.
+
 **Safety**
 - No credentials appear anywhere in the report.
 - No repository file was modified.
@@ -354,7 +395,8 @@ Before posting, confirm:
 11. **Never expose credentials or tokens.**
 12. **Exactly one comment per run.**
 13. **Account for every active case** — executed or explicitly skipped.
-14. **When uncertain, say so** rather than guessing.
+14. **The sheet is the plan.** If a host plugin substitutes an auto-generated plan, report that as a discovery failure — its results are not coverage.
+15. **When uncertain, say so** rather than guessing.
 
 ---
 
