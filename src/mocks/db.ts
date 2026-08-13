@@ -1,7 +1,7 @@
 import { StorageKey } from '@/enums'
 import { readStorage, removeStorage, writeStorage } from '@/lib/storage'
-import type { Product } from '@/types'
-import { SEED_PRODUCTS } from './seed'
+import type { AppNotification, Product } from '@/types'
+import { SEED_NOTIFICATIONS, SEED_PRODUCTS } from './seed'
 
 /**
  * In-browser "database" backing the MSW handlers. Persisted to localStorage so
@@ -18,11 +18,32 @@ export function saveProducts(products: Product[]) {
 export function resetDb() {
   removeStorage(StorageKey.Products)
   writeStorage(StorageKey.Products, SEED_PRODUCTS)
+  removeStorage(StorageKey.Notifications)
+  writeStorage(StorageKey.Notifications, SEED_NOTIFICATIONS)
+}
+
+export function getNotifications(): AppNotification[] {
+  return readStorage<AppNotification[]>(
+    StorageKey.Notifications,
+    SEED_NOTIFICATIONS,
+  )
+}
+
+export function saveNotifications(items: AppNotification[]) {
+  writeStorage(StorageKey.Notifications, items)
 }
 
 export function ensureSeeded() {
   const existing = readStorage<Product[] | null>(StorageKey.Products, null)
   if (existing === null) writeStorage(StorageKey.Products, SEED_PRODUCTS)
+
+  const notifications = readStorage<AppNotification[] | null>(
+    StorageKey.Notifications,
+    null,
+  )
+  if (notifications === null) {
+    writeStorage(StorageKey.Notifications, SEED_NOTIFICATIONS)
+  }
 }
 
 /** Network simulation knobs, toggleable at runtime from the Settings page. */

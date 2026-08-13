@@ -1,4 +1,9 @@
-import type { ProductCategory, ProductStatus, UserRole } from '@/enums'
+import type {
+  NotificationKind,
+  ProductCategory,
+  ProductStatus,
+  UserRole,
+} from '@/enums'
 
 export interface User {
   id: string
@@ -72,4 +77,13 @@ export interface ApiError {
   message: string
   code?: string
   fieldErrors?: Record<string, string>
+}
+
+export interface AppNotification {
+  id: string
+  title: string
+  body: string
+  kind: NotificationKind
+  read: boolean
+  createdAt: string
 }

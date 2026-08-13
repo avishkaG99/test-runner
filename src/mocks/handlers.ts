@@ -11,10 +11,12 @@ import type {
 } from '@/types'
 import {
   getLatency,
+  getNotifications,
   getProducts,
   isFlakyMode,
   nextProductId,
   resetDb,
+  saveNotifications,
   saveProducts,
 } from './db'
 import { LOW_STOCK_THRESHOLD, SEED_ACCOUNTS } from './seed'
@@ -288,6 +290,56 @@ export const handlers = [
       })
     }
     return HttpResponse.json({ ok: true, received: payload }, { status: 201 })
+  }),
+
+  http.get('/api/notifications', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    const failure = await simulateNetwork()
+    if (failure) return failure
+
+    const items = getNotifications()
+    return HttpResponse.json({
+      items,
+      unreadCount: items.filter((n) => !n.read).length,
+    })
+  }),
+
+  http.post('/api/notifications/:id/read', async ({ request, params }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const items = getNotifications()
+    const index = items.findIndex((n) => n.id === params.id)
+    if (index === -1) return error(404, { message: 'Notification not found.' })
+
+    const next = [...items]
+    next[index] = { ...next[index], read: true }
+    saveNotifications(next)
+    return HttpResponse.json({
+      item: next[index],
+      unreadCount: next.filter((n) => !n.read).length,
+    })
+  }),
+
+  http.post('/api/notifications/read-all', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const items = getNotifications().map((n) => ({ ...n, read: true }))
+    saveNotifications(items)
+    return HttpResponse.json({ updated: items.length, unreadCount: 0 })
+  }),
+
+  http.delete('/api/notifications', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    saveNotifications([])
+    return HttpResponse.json({ cleared: true, unreadCount: 0 })
   }),
 
   http.post('/api/app/reset', async () => {
