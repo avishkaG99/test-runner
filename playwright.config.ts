@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
-export const BASE_URL = 'http://localhost:5173'
+// Overridable so the suite can run against a deployed preview:
+//   BASE_URL=https://…vercel.app npm run test:e2e
+export const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5173'
 
 export default defineConfig({
   testDir: './e2e',
@@ -21,10 +23,14 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
 
-  webServer: {
-    command: 'npm run dev',
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // Only boot a dev server when testing locally. With BASE_URL pointing at a
+  // deployed preview there is nothing to start.
+  webServer: process.env.BASE_URL
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: BASE_URL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 })
