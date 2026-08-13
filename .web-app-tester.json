@@ -3,22 +3,11 @@
   "environments": {
     "preview": {
       "baseUrl": "https://test-runner-git-test-pr-avishkag-2033s-projects.vercel.app",
-      "mutationsAllowed": true,
-      "storageStates": {
-        "admin": "tests/e2e/.auth/admin.json",
-        "user": "tests/e2e/.auth/user.json"
-      },
-      "defaultRole": "user"
+      "mutationsAllowed": true
     },
     "local": {
       "baseUrl": "http://localhost:5173",
-      "mutationsAllowed": true,
-      "storageStates": {
-        "admin": "tests/e2e/.auth/admin.json",
-        "user": "tests/e2e/.auth/user.json"
-      },
-      "defaultRole": "user"
+      "mutationsAllowed": true
     }
-  },
-  "authSetupCommand": "npm run auth:refresh"
+  }
 }
