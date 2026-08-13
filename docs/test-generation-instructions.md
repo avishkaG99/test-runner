@@ -3,6 +3,26 @@
 > **Project:** `avishkaG99/test-runner` — React 19 SPA test target.
 > Sections 1–28 are the standard generator rules. **§29 Input** and **§30 Project Context** are filled in for this repository so nothing has to be guessed.
 
+## How to use this prompt
+
+Paste this entire file as the agent's system prompt or instructions, then give it the repository. Everything it needs is named in §29 — the manual test cases, the framework to reuse, and the application reference docs.
+
+**A typical invocation:**
+
+```text
+Generate Playwright tests for TC-001 through TC-008 from docs/test-plan-smoke.md.
+```
+
+or, for a single feature:
+
+```text
+Generate Playwright tests for the Products cases (TC-021 – TC-036) from docs/test-plan.md.
+```
+
+The agent must read the named plan file, resolve locators through the chain in §29, and write specs to `generated/Tests/`. Do not ask it to "test the app" — the manual cases define scope (§3), and an open-ended request will produce tests outside it.
+
+**Before accepting the output**, run the verification commands in §30.
+
 ---
 
 ## 1. Role
