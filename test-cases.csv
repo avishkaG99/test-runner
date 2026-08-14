@@ -232,3 +232,16 @@ TC-051,Settings and admin,a standard user is redirected away from `/admin`,Negat
 TC-052,Settings and admin,an unknown route shows the 404 page,Negative,"1. Sign in as `user@test.com` / `User123!`
 2. Navigate to `/no-such-route`
 3. Confirm a ""not found"" page appears with a link back to the dashboard",Unknown routes render the 404 page rather than a blank screen.,,Active,initial
+TC-053,Tags,create a tag,Happy,"1. Sign in and navigate to `/tags`
+2. Confirm the header reads `3` tags and `1` unused
+3. Enter `QA Smoke Tag` in the Name field
+4. Click **Create tag**
+5. Confirm the header count increases to `4` and the new row appears in the list",The tag is created and listed without a reload.,,Active,PR#5
+TC-054,Tags,delete an unused tag,Happy,"1. Sign in and navigate to `/tags`
+2. Click **Delete** on **New arrival** (0 products) — a confirmation dialog opens
+3. Click **Delete** to confirm
+4. Confirm the row disappears and the tag count drops by one",An unused tag can be deleted after confirmation.,,Active,PR#5
+TC-055,Tags,deleting a tag in use is refused,Negative,"1. Sign in and navigate to `/tags`
+2. Click **Delete** on **Featured** (4 products) — a confirmation dialog opens
+3. Click **Delete** to confirm
+4. Confirm the dialog stays open and shows an error stating `""Featured"" is applied to 4 product(s) and cannot be deleted.`",The server refuses deletion of an in-use tag and the message is shown inline.,,Active,PR#5
