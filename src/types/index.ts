@@ -1,4 +1,5 @@
 import type {
+  Language,
   NotificationKind,
   ProductCategory,
   ProductStatus,
@@ -11,6 +12,40 @@ export interface User {
   email: string
   name: string
   role: UserRole
+}
+
+/**
+ * Editable profile detail for the signed-in user. Kept separate from `User`:
+ * `User` is the session identity echoed by login, this is the fuller record the
+ * profile screen loads and writes.
+ */
+export interface UserProfile {
+  id: string
+  email: string
+  name: string
+  role: UserRole
+  displayName: string
+  jobTitle: string
+  bio: string
+  timezone: string
+  language: Language
+  marketingEmails: boolean
+  updatedAt: string
+}
+
+export type UserProfileInput = Pick<
+  UserProfile,
+  | 'displayName'
+  | 'jobTitle'
+  | 'bio'
+  | 'timezone'
+  | 'language'
+  | 'marketingEmails'
+>
+
+export interface ChangePasswordInput {
+  currentPassword: string
+  newPassword: string
 }
 
 export interface AuthSession {

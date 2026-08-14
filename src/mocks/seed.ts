@@ -1,5 +1,5 @@
-import { NotificationKind, ProductCategory, ProductStatus, TagColor, UserRole } from '@/enums'
-import type { AppNotification, Product, SavedView, Tag, User } from '@/types'
+import { Language, NotificationKind, ProductCategory, ProductStatus, TagColor, UserRole } from '@/enums'
+import type { AppNotification, Product, SavedView, Tag, User, UserProfile } from '@/types'
 
 export interface SeedAccount extends User {
   password: string
@@ -77,6 +77,56 @@ export const SEED_SAVED_VIEWS: SavedView[] = [
   { id: 'sv-1', name: 'Active electronics', category: ProductCategory.Electronics, status: ProductStatus.Active, createdAt: '2025-02-01T10:00:00.000Z' },
   { id: 'sv-2', name: 'Draft apparel', category: ProductCategory.Apparel, status: ProductStatus.Draft, createdAt: '2025-02-02T10:00:00.000Z' },
 ]
+
+/**
+ * One profile per seeded account, keyed by user id. Fixed `updatedAt` values so
+ * the "last updated" line renders identically until a test changes it.
+ *
+ * `u-2` (the standard user) is deliberately sparse — empty job title and bio —
+ * so the profile screen's empty-field handling is reachable without editing
+ * anything first.
+ */
+export const SEED_PROFILES: Record<string, UserProfile> = {
+  'u-1': {
+    id: 'u-1',
+    email: 'admin@test.com',
+    name: 'Ada Admin',
+    role: UserRole.Admin,
+    displayName: 'Ada',
+    jobTitle: 'Platform Administrator',
+    bio: 'Keeps the catalogue honest and the permissions tight.',
+    timezone: 'Europe/London',
+    language: Language.English,
+    marketingEmails: true,
+    updatedAt: '2025-02-10T09:00:00.000Z',
+  },
+  'u-2': {
+    id: 'u-2',
+    email: 'user@test.com',
+    name: 'Sam Standard',
+    role: UserRole.User,
+    displayName: 'Sam',
+    jobTitle: '',
+    bio: '',
+    timezone: 'UTC',
+    language: Language.English,
+    marketingEmails: false,
+    updatedAt: '2025-02-11T09:00:00.000Z',
+  },
+  'u-3': {
+    id: 'u-3',
+    email: 'locked@test.com',
+    name: 'Lee Locked',
+    role: UserRole.User,
+    displayName: 'Lee',
+    jobTitle: 'Contractor',
+    bio: 'Account is locked; this profile is unreachable through the UI.',
+    timezone: 'America/New_York',
+    language: Language.French,
+    marketingEmails: false,
+    updatedAt: '2025-02-12T09:00:00.000Z',
+  },
+}
 
 export const SEED_TAGS: Tag[] = [
   { id: 't-1', name: 'Featured', color: TagColor.Amber, productCount: 4, createdAt: '2025-02-01T11:00:00.000Z' },

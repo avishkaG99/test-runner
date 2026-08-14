@@ -1,7 +1,9 @@
 import { delay, http, HttpResponse } from 'msw'
-import { ProductCategory } from '@/enums'
+import { Language, ProductCategory, TIMEZONES } from '@/enums'
+import type { Timezone } from '@/enums'
 import type {
   ApiError,
+  ChangePasswordInput,
   DashboardStats,
   LoginRequest,
   Paginated,
@@ -10,11 +12,14 @@ import type {
   SavedView,
   SignUpRequest,
   Tag,
+  UserProfile,
+  UserProfileInput,
 } from '@/types'
 import {
   getLatency,
   getNotifications,
   getProducts,
+  getProfiles,
   getSavedViews,
   getTags,
   isFlakyMode,
@@ -24,12 +29,31 @@ import {
   resetDb,
   saveNotifications,
   saveProducts,
+  saveProfiles,
   saveSavedViews,
   saveTags,
 } from './db'
 import { LOW_STOCK_THRESHOLD, SEED_ACCOUNTS } from './seed'
 
 const SESSION_TTL_MS = 60 * 60 * 1000
+
+export const BIO_MAX_LENGTH = 280
+
+const LANGUAGES = Object.values(Language)
+
+/**
+ * Recovers the caller's user id from the bearer token.
+ *
+ * Tokens are minted as `mock-token-<userId>` at login, so the id is readable
+ * without any session store. Returns null when the header is missing or shaped
+ * differently, and callers treat that as "no profile".
+ */
+function userIdFromRequest(request: Request): string | null {
+  const header = request.headers.get('Authorization') ?? ''
+  const token = header.replace(/^Bearer\s+/, '')
+  const id = token.replace(/^mock-token-/, '')
+  return id && id !== token ? id : null
+}
 
 function error(status: number, body: ApiError) {
   return HttpResponse.json(body, { status })
@@ -452,6 +476,125 @@ export const handlers = [
     }
     saveTags(tags.filter((t) => t.id !== params.id))
     return HttpResponse.json({ deleted: true })
+  }),
+
+  http.get('/api/profile', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    const failure = await simulateNetwork()
+    if (failure) return failure
+
+    const userId = userIdFromRequest(request)
+    const profile = userId ? getProfiles()[userId] : undefined
+    if (!profile) return error(404, { message: 'Profile not found.' })
+
+    return HttpResponse.json({ item: profile })
+  }),
+
+  http.put('/api/profile', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const userId = userIdFromRequest(request)
+    const profiles = getProfiles()
+    const current = userId ? profiles[userId] : undefined
+    if (!userId || !current) {
+      return error(404, { message: 'Profile not found.' })
+    }
+
+    const input = (await request.json()) as Partial<UserProfileInput>
+    const displayName = (input.displayName ?? '').trim()
+    const jobTitle = (input.jobTitle ?? '').trim()
+    const bio = (input.bio ?? '').trim()
+
+    // Magic trigger, consistent with products and sign-up.
+    if (displayName.toLowerCase().includes('fail')) {
+      return error(500, {
+        message: 'Unexpected server error. Please try again later.',
+        code: 'FORCED_ERROR',
+      })
+    }
+
+    const fieldErrors: Record<string, string> = {}
+    if (!displayName) {
+      fieldErrors.displayName = 'Display name is required.'
+    } else if (displayName.length < 2) {
+      fieldErrors.displayName = 'Display name must be at least 2 characters.'
+    } else if (displayName.length > 40) {
+      fieldErrors.displayName = 'Display name must be 40 characters or fewer.'
+    }
+    if (jobTitle.length > 60) {
+      fieldErrors.jobTitle = 'Job title must be 60 characters or fewer.'
+    }
+    if (bio.length > BIO_MAX_LENGTH) {
+      fieldErrors.bio = `Bio must be ${BIO_MAX_LENGTH} characters or fewer.`
+    }
+    if (input.timezone && !TIMEZONES.includes(input.timezone as Timezone)) {
+      fieldErrors.timezone = 'Unknown timezone.'
+    }
+    if (input.language && !LANGUAGES.includes(input.language)) {
+      fieldErrors.language = 'Unsupported language.'
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return error(422, { message: 'Please fix the errors below.', fieldErrors })
+    }
+
+    const updated: UserProfile = {
+      ...current,
+      displayName,
+      jobTitle,
+      bio,
+      timezone: input.timezone ?? current.timezone,
+      language: input.language ?? current.language,
+      marketingEmails: input.marketingEmails ?? current.marketingEmails,
+      updatedAt: new Date().toISOString(),
+    }
+    saveProfiles({ ...profiles, [userId]: updated })
+    return HttpResponse.json({ item: updated })
+  }),
+
+  http.post('/api/profile/change-password', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const userId = userIdFromRequest(request)
+    const account = SEED_ACCOUNTS.find((a) => a.id === userId)
+    if (!account) return error(404, { message: 'Profile not found.' })
+
+    const body = (await request.json()) as Partial<ChangePasswordInput>
+    const currentPassword = body.currentPassword ?? ''
+    const newPassword = body.newPassword ?? ''
+
+    const fieldErrors: Record<string, string> = {}
+    if (!currentPassword) {
+      fieldErrors.currentPassword = 'Current password is required.'
+    }
+    if (!newPassword) {
+      fieldErrors.newPassword = 'New password is required.'
+    } else if (newPassword.length < 8) {
+      fieldErrors.newPassword = 'New password must be at least 8 characters.'
+    } else if (newPassword === currentPassword) {
+      fieldErrors.newPassword =
+        'New password must be different from the current one.'
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return error(422, { message: 'Please fix the errors below.', fieldErrors })
+    }
+
+    // Checked after shape validation so a wrong password is reported on its own.
+    if (currentPassword !== account.password) {
+      return error(422, {
+        message: 'Please fix the errors below.',
+        code: 'INVALID_CREDENTIALS',
+        fieldErrors: { currentPassword: 'Current password is incorrect.' },
+      })
+    }
+
+    // Deliberately not persisted: the seeded accounts must keep working across
+    // reloads, and a changed password would strand the whole suite.
+    return HttpResponse.json({ ok: true, changedAt: new Date().toISOString() })
   }),
 
   http.post('/api/app/reset', async () => {

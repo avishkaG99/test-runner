@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/forms', label: 'Forms' },
   { to: '/ui-playground', label: 'UI Playground' },
   { to: '/reports', label: 'Reports' },
+  { to: '/profile', label: 'Profile' },
   { to: '/settings', label: 'Settings' },
   { to: '/admin', label: 'Admin', adminOnly: true },
 ]

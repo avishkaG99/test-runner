@@ -1,7 +1,7 @@
 import { StorageKey } from '@/enums'
 import { readStorage, removeStorage, writeStorage } from '@/lib/storage'
-import type { AppNotification, Product, SavedView, Tag } from '@/types'
-import { SEED_NOTIFICATIONS, SEED_PRODUCTS, SEED_SAVED_VIEWS, SEED_TAGS } from './seed'
+import type { AppNotification, Product, SavedView, Tag, UserProfile } from '@/types'
+import { SEED_NOTIFICATIONS, SEED_PRODUCTS, SEED_PROFILES, SEED_SAVED_VIEWS, SEED_TAGS } from './seed'
 
 /**
  * In-browser "database" backing the MSW handlers. Persisted to localStorage so
@@ -24,6 +24,8 @@ export function resetDb() {
   writeStorage(StorageKey.SavedViews, SEED_SAVED_VIEWS)
   removeStorage(StorageKey.Tags)
   writeStorage(StorageKey.Tags, SEED_TAGS)
+  removeStorage(StorageKey.Profile)
+  writeStorage(StorageKey.Profile, SEED_PROFILES)
 }
 
 export function getTags(): Tag[] {
@@ -40,6 +42,17 @@ export function nextTagId(tags: Tag[]): string {
     return Number.isFinite(n) && n > max ? n : max
   }, 0)
   return `t-${maxN + 1}`
+}
+
+export function getProfiles(): Record<string, UserProfile> {
+  return readStorage<Record<string, UserProfile>>(
+    StorageKey.Profile,
+    SEED_PROFILES,
+  )
+}
+
+export function saveProfiles(profiles: Record<string, UserProfile>) {
+  writeStorage(StorageKey.Profile, profiles)
 }
 
 export function getSavedViews(): SavedView[] {
@@ -86,6 +99,12 @@ export function ensureSeeded() {
 
   const tags = readStorage<Tag[] | null>(StorageKey.Tags, null)
   if (tags === null) writeStorage(StorageKey.Tags, SEED_TAGS)
+
+  const profiles = readStorage<Record<string, UserProfile> | null>(
+    StorageKey.Profile,
+    null,
+  )
+  if (profiles === null) writeStorage(StorageKey.Profile, SEED_PROFILES)
 }
 
 /** Network simulation knobs, toggleable at runtime from the Settings page. */
