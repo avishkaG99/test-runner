@@ -33,6 +33,16 @@ export const NotificationKind = {
 export type NotificationKind =
   (typeof NotificationKind)[keyof typeof NotificationKind]
 
+export const TagColor = {
+  Slate: 'slate',
+  Blue: 'blue',
+  Green: 'green',
+  Amber: 'amber',
+  Rose: 'rose',
+} as const
+
+export type TagColor = (typeof TagColor)[keyof typeof TagColor]
+
 export const StorageKey = {
   Token: 'tta.token',
   User: 'tta.user',
@@ -42,6 +52,7 @@ export const StorageKey = {
   Latency: 'tta.latency',
   Notifications: 'tta.notifications',
   SavedViews: 'tta.savedViews',
+  Tags: 'tta.tags',
 } as const
 
 export type StorageKey = (typeof StorageKey)[keyof typeof StorageKey]

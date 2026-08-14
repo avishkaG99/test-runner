@@ -33,3 +33,6 @@ dist-ssr
 /tests/e2e/.auth/
 # web-app-tester scratch dir
 /_wat_run/
+
+# TanStack Router temp output
+/.tanstack/

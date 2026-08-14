@@ -9,19 +9,23 @@ import type {
   ProductInput,
   SavedView,
   SignUpRequest,
+  Tag,
 } from '@/types'
 import {
   getLatency,
   getNotifications,
   getProducts,
   getSavedViews,
+  getTags,
   isFlakyMode,
   nextProductId,
   nextSavedViewId,
+  nextTagId,
   resetDb,
   saveNotifications,
   saveProducts,
   saveSavedViews,
+  saveTags,
 } from './db'
 import { LOW_STOCK_THRESHOLD, SEED_ACCOUNTS } from './seed'
 
@@ -393,6 +397,60 @@ export const handlers = [
       return error(404, { message: 'Saved view not found.' })
     }
     saveSavedViews(views.filter((v) => v.id !== params.id))
+    return HttpResponse.json({ deleted: true })
+  }),
+
+  http.get('/api/tags', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    const failure = await simulateNetwork()
+    if (failure) return failure
+
+    return HttpResponse.json({ items: getTags() })
+  }),
+
+  http.post('/api/tags', async ({ request }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const payload = (await request.json()) as Partial<Tag>
+    const name = (payload.name ?? '').trim()
+    if (!name) return error(400, { message: 'Tag name is required.' })
+    if (name.length > 24) {
+      return error(400, { message: 'Tag name must be 24 characters or fewer.' })
+    }
+
+    const tags = getTags()
+    if (tags.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
+      return error(409, { message: 'A tag with that name already exists.' })
+    }
+
+    const tag: Tag = {
+      id: nextTagId(tags),
+      name,
+      color: payload.color ?? 'slate',
+      productCount: 0,
+      createdAt: new Date().toISOString(),
+    }
+    saveTags([...tags, tag])
+    return HttpResponse.json({ item: tag }, { status: 201 })
+  }),
+
+  http.delete('/api/tags/:id', async ({ request, params }) => {
+    const unauthorized = requireAuth(request)
+    if (unauthorized) return unauthorized
+    await delay(getLatency())
+
+    const tags = getTags()
+    const target = tags.find((t) => t.id === params.id)
+    if (!target) return error(404, { message: 'Tag not found.' })
+    if (target.productCount > 0) {
+      return error(409, {
+        message: `"${target.name}" is applied to ${target.productCount} product(s) and cannot be deleted.`,
+      })
+    }
+    saveTags(tags.filter((t) => t.id !== params.id))
     return HttpResponse.json({ deleted: true })
   }),
 
