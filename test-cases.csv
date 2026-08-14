@@ -245,3 +245,32 @@ TC-055,Tags,deleting a tag in use is refused,Negative,"1. Sign in and navigate t
 2. Click **Delete** on **Featured** (4 products) — a confirmation dialog opens
 3. Click **Delete** to confirm
 4. Confirm the dialog stays open and shows an error stating `""Featured"" is applied to 4 product(s) and cannot be deleted.`",The server refuses deletion of an in-use tag and the message is shown inline.,,Active,PR#5
+TC-056,Profile,view profile identity and defaults,Happy,"1. Sign in as `user@test.com` / `User123!`
+2. Navigate to `/profile`
+3. Confirm the email shown reads `user@test.com` and the role reads `user`
+4. Confirm the Job title field is empty
+5. Confirm the dirty-state label reads `No changes` and Save is disabled",The profile loads the signed-in user's seeded data with Save disabled while unchanged.,,Active,PR#6
+TC-057,Profile,edit profile fields and save updates the header,Happy,"1. Sign in as `user@test.com` / `User123!` and navigate to `/profile`
+2. Change the Display name to `Sam Standard II` and the Job title to `QA Lead`
+3. Confirm the dirty-state label reads `Unsaved changes` and Save becomes enabled
+4. Click **Save changes**
+5. Confirm a saved confirmation appears, the dirty-state label returns to `No changes`, and the header display name updates to `Sam Standard II`","Edits persist, the confirmation appears, and the session header follows the new display name.",,Active,PR#6
+TC-058,Profile,a display name under 2 characters is rejected,Negative,"1. Sign in and navigate to `/profile`
+2. Change the Display name to `S`
+3. Click **Save changes**
+4. Confirm an error under Display name states a 2-character minimum
+5. Confirm no saved confirmation appears",Client-side validation blocks the save.,,Active,PR#6
+TC-059,Profile,the bio counter flags exceeding the limit,Negative,"1. Sign in and navigate to `/profile`
+2. Enter 281 characters into the Bio field
+3. Confirm the counter reads `281 / 280`
+4. Click **Save changes**
+5. Confirm an error under Bio states the 280-character limit",The counter and the submit-time validation both flag the overflow.,,Active,PR#6
+TC-060,Profile,change password rejects a mismatched confirmation,Negative,"1. Sign in and navigate to `/profile`
+2. In the password form, enter the current password, a new password, and a different confirmation
+3. Click **Change password**
+4. Confirm an error under Confirm password states the passwords do not match",Submission is blocked at the confirmation field.,,Active,PR#6
+TC-061,Profile,a valid password change succeeds without persisting,Happy,"1. Sign in as `user@test.com` / `User123!` and navigate to `/profile`
+2. Enter the current password and a new, different password twice in the password form
+3. Click **Change password**
+4. Confirm a success confirmation appears and the form clears
+5. Sign out, then sign back in with the original seeded password `User123!`",The change is confirmed but deliberately not persisted — the original password still works.,The reset is deliberate app behavior; do not treat re-use of the old password as a bug.,Active,PR#6

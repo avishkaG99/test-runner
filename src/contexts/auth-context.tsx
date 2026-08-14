@@ -17,6 +17,8 @@ export interface AuthContextValue {
   signIn: (session: AuthSession) => void
   signOut: () => void
   forceExpire: () => void
+  /** Patches the session user in place, e.g. after a profile save. */
+  updateUser: (patch: Partial<User>) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
@@ -41,6 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionState(null)
   }, [])
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setSessionState((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, user: { ...prev.user, ...patch } }
+      setSession(next)
+      return next
+    })
+  }, [])
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
@@ -50,8 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
       forceExpire,
+      updateUser,
     }),
-    [session, signIn, signOut, forceExpire],
+    [session, signIn, signOut, forceExpire, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

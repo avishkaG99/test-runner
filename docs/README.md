@@ -17,6 +17,7 @@ Each follows the [frontend feature specification template](./feature-spec-templa
 | [Wizard](./features/wizard.md) | `/forms/wizard` | TC-013 |
 | [UI playground](./features/ui-playground.md) | `/ui-playground` | TC-014b, TC-014c |
 | [Reports](./features/reports.md) | `/reports` | TC-014 |
+| [Profile](./features/profile.md) | `/profile` | *pending — see spec §6* |
 | [Settings](./features/settings.md) | `/settings` | TC-014d, TC-014e |
 | [Admin](./features/admin.md) | `/admin` | TC-015, TC-004b |
 

@@ -23,6 +23,9 @@ Base path `/api`. Endpoints marked **auth** require an `Authorization: Bearer �
 | PUT | `/api/products/:id` | auth | 404 if missing |
 | DELETE | `/api/products/:id` | auth | 204 on success |
 | POST | `/api/products/bulk-delete` | auth | Body `{ ids: string[] }`, returns `{ deleted }` |
+| GET | `/api/profile` | auth | The caller's profile, resolved from the bearer token |
+| PUT | `/api/profile` | auth | 422 field errors; 500 if display name contains `fail` |
+| POST | `/api/profile/change-password` | auth | 422 on validation or a wrong current password; never persisted |
 | GET | `/api/categories` | — | The five category values |
 | POST | `/api/forms/submit` | — | Echoes the payload back |
 | POST | `/api/app/reset` | — | Restores seed data |

@@ -21,6 +21,7 @@ import { Route as AuthenticatedFormsIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFormsWizardRouteImport } from './routes/_authenticated/forms/wizard'
 import { Route as AuthenticatedNotificationsIndexRouteImport } from './routes/_authenticated/notifications/index'
 import { Route as AuthenticatedProductsIndexRouteImport } from './routes/_authenticated/products/index'
+import { Route as AuthenticatedProfileIndexRouteImport } from './routes/_authenticated/profile/index'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedSavedViewsIndexRouteImport } from './routes/_authenticated/saved-views/index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
@@ -89,6 +90,12 @@ const AuthenticatedProductsIndexRoute =
     path: '/products/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProfileIndexRoute =
+  AuthenticatedProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsIndexRoute =
   AuthenticatedReportsIndexRouteImport.update({
     id: '/reports/',
@@ -130,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/forms/': typeof AuthenticatedFormsIndexRoute
   '/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/products/': typeof AuthenticatedProductsIndexRoute
+  '/profile/': typeof AuthenticatedProfileIndexRoute
   '/reports/': typeof AuthenticatedReportsIndexRoute
   '/saved-views/': typeof AuthenticatedSavedViewsIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -147,6 +155,7 @@ export interface FileRoutesByTo {
   '/forms': typeof AuthenticatedFormsIndexRoute
   '/notifications': typeof AuthenticatedNotificationsIndexRoute
   '/products': typeof AuthenticatedProductsIndexRoute
+  '/profile': typeof AuthenticatedProfileIndexRoute
   '/reports': typeof AuthenticatedReportsIndexRoute
   '/saved-views': typeof AuthenticatedSavedViewsIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
@@ -167,6 +176,7 @@ export interface FileRoutesById {
   '/_authenticated/forms/': typeof AuthenticatedFormsIndexRoute
   '/_authenticated/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/_authenticated/products/': typeof AuthenticatedProductsIndexRoute
+  '/_authenticated/profile/': typeof AuthenticatedProfileIndexRoute
   '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
   '/_authenticated/saved-views/': typeof AuthenticatedSavedViewsIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/forms/'
     | '/notifications/'
     | '/products/'
+    | '/profile/'
     | '/reports/'
     | '/saved-views/'
     | '/settings/'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/notifications'
     | '/products'
+    | '/profile'
     | '/reports'
     | '/saved-views'
     | '/settings'
@@ -222,6 +234,7 @@ export interface FileRouteTypes {
     | '/_authenticated/forms/'
     | '/_authenticated/notifications/'
     | '/_authenticated/products/'
+    | '/_authenticated/profile/'
     | '/_authenticated/reports/'
     | '/_authenticated/saved-views/'
     | '/_authenticated/settings/'
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProductsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile/': {
+      id: '/_authenticated/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof AuthenticatedProfileIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports/': {
       id: '/_authenticated/reports/'
       path: '/reports'
@@ -382,6 +402,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFormsIndexRoute: typeof AuthenticatedFormsIndexRoute
   AuthenticatedNotificationsIndexRoute: typeof AuthenticatedNotificationsIndexRoute
   AuthenticatedProductsIndexRoute: typeof AuthenticatedProductsIndexRoute
+  AuthenticatedProfileIndexRoute: typeof AuthenticatedProfileIndexRoute
   AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
   AuthenticatedSavedViewsIndexRoute: typeof AuthenticatedSavedViewsIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
@@ -396,6 +417,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFormsIndexRoute: AuthenticatedFormsIndexRoute,
   AuthenticatedNotificationsIndexRoute: AuthenticatedNotificationsIndexRoute,
   AuthenticatedProductsIndexRoute: AuthenticatedProductsIndexRoute,
+  AuthenticatedProfileIndexRoute: AuthenticatedProfileIndexRoute,
   AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
   AuthenticatedSavedViewsIndexRoute: AuthenticatedSavedViewsIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
