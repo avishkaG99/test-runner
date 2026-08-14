@@ -21,6 +21,7 @@ function initialAuthContext(): AuthContextValue {
     signIn: noop,
     signOut: noop,
     forceExpire: noop,
+    updateUser: noop,
   }
 }
 
